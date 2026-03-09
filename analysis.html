@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cost Analysis — MyAutoCare</title>
+<link rel="stylesheet" href="app.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="app-layout"></div>
+<script src="app-core.js"></script>
+<script src="layout.js"></script>
+<script>
+buildLayout('analysis', 'Cost Analysis');
+
+const user = MAC.auth.getUser();
+const vehicles = MAC.vehicles.forUser(user.id);
+const allLogs = MAC.logs.forUser(user.id);
+
+const chartOpts = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: { backgroundColor: '#102213', titleColor: '#9ffcad', bodyColor: '#b8dfc0', borderColor: '#35e857', borderWidth: 1, callbacks: { label: ctx => 'RM ' + ctx.parsed.y.toFixed(2) } }
+  },
+  scales: {
+    x: { grid: { color: 'rgba(53,232,87,.05)' }, ticks: { color: '#6db37c', font: { size: 11 } } },
+    y: { grid: { color: 'rgba(53,232,87,.05)' }, ticks: { color: '#6db37c', callback: v => 'RM' + v } }
+  }
+};
+
+// Monthly trend (12 months)
+const monthLabels = [], monthData = [];
+for (let i = 11; i >= 0; i--) {
+  const d = new Date(); d.setMonth(d.getMonth() - i);
+  const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  monthLabels.push(d.toLocaleDateString('en-MY', { month: 'short', year: '2-digit' }));
+  monthData.push(allLogs.filter(l => l.serviceDate && l.serviceDate.startsWith(key)).reduce((s, l) => s + parseFloat(l.cost || 0), 0));
+}
+
+// By service type
+const typeCosts = {};
+allLogs.forEach(l => { typeCosts[l.serviceType] = (typeCosts[l.serviceType] || 0) + parseFloat(l.cost || 0); });
+const typeLabels = Object.keys(typeCosts);
+const typeData = Object.values(typeCosts);
+
+// By vehicle
+const vehCosts = {};
+allLogs.forEach(l => {
+  const v = MAC.vehicles.get(l.vehicleId);
+  const label = v ? v.brand + ' ' + v.model + ' (' + v.plate + ')' : 'Unknown';
+  vehCosts[label] = (vehCosts[label] || 0) + parseFloat(l.cost || 0);
+});
+
+const totalSpent = allLogs.reduce((s, l) => s + parseFloat(l.cost || 0), 0);
+const avgCost = allLogs.length ? totalSpent / allLogs.length : 0;
+const topType = typeLabels.length ? typeLabels[typeData.indexOf(Math.max(...typeData))] : '—';
+const mostExpensive = allLogs.length ? [...allLogs].sort((a,b) => parseFloat(b.cost)-parseFloat(a.cost))[0] : null;
+
+const colors = ['#35e857','#9ffcad','#1f4a2a','#fbbf24','#60a5fa','#f87171','#c084fc','#fb923c','#34d399','#a78bfa','#f472b6','#38bdf8'];
+
+document.getElementById('page-content').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Cost Analysis</h1>
+      <p class="page-subtitle">Track your vehicle maintenance spending trends</p>
+    </div>
+  </div>
+
+  <div class="stat-grid" style="margin-bottom:1.5rem">
+    <div class="stat-card">
+      <div class="stat-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg></div>
+      <div><div class="stat-val">RM ${totalSpent.toFixed(0)}</div><div class="stat-label">Total Spent</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185Z"/></svg></div>
+      <div><div class="stat-val">RM ${avgCost.toFixed(0)}</div><div class="stat-label">Avg per Service</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941"/></svg></div>
+      <div><div class="stat-val" style="font-size:1.1rem">${MAC.utils.escapeHtml(topType)}</div><div class="stat-label">Highest Cost Category</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25Z"/></svg></div>
+      <div><div class="stat-val">${allLogs.length}</div><div class="stat-label">Total Records</div></div>
+    </div>
+  </div>
+
+  <!-- Monthly trend -->
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.25rem;margin-bottom:1.25rem" class="analysis-grid-1">
+    <div class="chart-card">
+      <div class="card-header" style="margin-bottom:1rem">
+        <div class="card-title">Monthly Spending Trend</div>
+        <span style="font-size:.75rem;color:var(--muted)">Last 12 months</span>
+      </div>
+      <div style="height:260px"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="card-header" style="margin-bottom:1rem">
+        <div class="card-title">Cost by Vehicle</div>
+      </div>
+      <div style="height:260px"><canvas id="vehChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- By type + table -->
+  <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:1.25rem" class="analysis-grid-2">
+    <div class="chart-card">
+      <div class="card-header" style="margin-bottom:1rem">
+        <div class="card-title">Cost by Service Type</div>
+      </div>
+      <div style="height:260px"><canvas id="typeChart"></canvas></div>
+    </div>
+    <div class="card" style="padding:0">
+      <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)">
+        <div class="card-title">Service Type Breakdown</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Service Type</th><th>Records</th><th>Total</th><th>%</th></tr></thead>
+          <tbody>
+            ${typeLabels.length ? typeLabels.map((t, i) => {
+              const count = allLogs.filter(l => l.serviceType === t).length;
+              const pct = totalSpent ? ((typeData[i] / totalSpent) * 100).toFixed(1) : 0;
+              return `<tr>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colors[i % colors.length]};margin-right:.5rem"></span>${MAC.utils.escapeHtml(t)}</td>
+                <td style="color:var(--muted)">${count}</td>
+                <td style="color:var(--accent);font-weight:600">${MAC.utils.formatCurrency(typeData[i])}</td>
+                <td style="color:var(--muted)">${pct}%</td>
+              </tr>`;
+            }).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted)">No data yet</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  ${mostExpensive ? `
+    <div class="card" style="margin-top:1.25rem;background:rgba(53,232,87,.04);border-color:var(--borderB)">
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <div style="font-size:1.5rem">💸</div>
+        <div>
+          <div style="font-family:var(--fd);font-weight:700;color:var(--white)">Most Expensive Service</div>
+          <div style="font-size:.875rem;color:var(--muted)">${MAC.utils.escapeHtml(mostExpensive.serviceType)} · ${MAC.utils.formatDate(mostExpensive.serviceDate)} · ${MAC.utils.escapeHtml(mostExpensive.workshopName)} · <strong style="color:var(--accent)">${MAC.utils.formatCurrency(mostExpensive.cost)}</strong></div>
+        </div>
+      </div>
+    </div>
+  ` : ''}
+`;
+
+if (typeof Chart !== 'undefined') {
+  Chart.defaults.color = '#6db37c';
+  Chart.defaults.font.family = "'Urbanist', sans-serif";
+
+  new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: { labels: monthLabels, datasets: [{ data: monthData, borderColor: '#35e857', backgroundColor: 'rgba(53,232,87,.08)', fill: true, tension: 0.4, pointBackgroundColor: '#35e857', pointRadius: 4 }] },
+    options: chartOpts
+  });
+
+  const vehLabels = Object.keys(vehCosts);
+  const vehData = Object.values(vehCosts);
+  new Chart(document.getElementById('vehChart'), {
+    type: 'doughnut',
+    data: { labels: vehLabels.length ? vehLabels : ['No Data'], datasets: [{ data: vehData.length ? vehData : [1], backgroundColor: colors, borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: true, position: 'bottom', labels: { color: '#b8dfc0', font: { size: 10 }, padding: 8, boxWidth: 8 } }, tooltip: { backgroundColor: '#102213', titleColor: '#9ffcad', bodyColor: '#b8dfc0', borderColor: '#35e857', borderWidth: 1, callbacks: { label: ctx => 'RM ' + ctx.parsed.toFixed(2) } } } }
+  });
+
+  new Chart(document.getElementById('typeChart'), {
+    type: 'bar',
+    data: { labels: typeLabels.length ? typeLabels : ['No Data'], datasets: [{ data: typeData.length ? typeData : [0], backgroundColor: colors.map(c => c + '33'), borderColor: colors, borderWidth: 2, borderRadius: 6 }] },
+    options: { ...chartOpts, indexAxis: 'y', plugins: { ...chartOpts.plugins }, scales: { x: { ...chartOpts.scales.x, ticks: { ...chartOpts.scales.x.ticks, callback: v => 'RM' + v } }, y: { grid: { display: false }, ticks: { color: '#6db37c', font: { size: 11 } } } } }
+  });
+}
+
+// Responsive
+if (window.innerWidth <= 700) {
+  document.querySelector('.analysis-grid-1').style.gridTemplateColumns = '1fr';
+  document.querySelector('.analysis-grid-2').style.gridTemplateColumns = '1fr';
+}
+</script>
+</body>
+</html>

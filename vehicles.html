@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Vehicles — MyAutoCare</title>
+<link rel="stylesheet" href="app.css"/>
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="app-layout"></div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="vehicleModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Add Vehicle</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <input type="hidden" id="editId"/>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Vehicle Type *</label>
+        <select id="vType" class="form-select">
+          <option value="car">🚗 Car</option>
+          <option value="motorcycle">🏍️ Motorcycle</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Plate Number *</label>
+        <input type="text" id="vPlate" class="form-control" placeholder="WXX 1234" style="text-transform:uppercase"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Brand *</label>
+        <input type="text" id="vBrand" class="form-control" placeholder="Perodua, Honda..."/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Model *</label>
+        <input type="text" id="vModel" class="form-control" placeholder="Myvi, Civic..."/>
+      </div>
+    </div>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Year</label>
+        <input type="number" id="vYear" class="form-control" placeholder="2021" min="1980" max="2025"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Colour</label>
+        <input type="text" id="vColour" class="form-control" placeholder="Silver"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fuel Type</label>
+        <select id="vFuel" class="form-select">
+          <option>Petrol</option>
+          <option>Diesel</option>
+          <option>EV</option>
+          <option>Hybrid</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Current Mileage (km)</label>
+      <input type="number" id="vMileage" class="form-control" placeholder="45000"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="saveVehicleBtn" onclick="saveVehicle()">Save Vehicle</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <span class="modal-title">Delete Vehicle?</span>
+      <button class="modal-close" onclick="document.getElementById('deleteModal').classList.remove('open')">×</button>
+    </div>
+    <p style="color:var(--muted);font-size:.9rem">This will permanently delete the vehicle and <strong style="color:var(--danger)">all its maintenance logs and reminders</strong>. This cannot be undone.</p>
+    <input type="hidden" id="deleteId"/>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="document.getElementById('deleteModal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">Yes, Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="app-core.js"></script>
+<script src="layout.js"></script>
+<script>
+buildLayout('vehicles', 'My Vehicles');
+
+function renderPage() {
+  const user = MAC.auth.getUser();
+  const vehicles = MAC.vehicles.forUser(user.id);
+
+  document.getElementById('page-content').innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">My Vehicles</h1>
+        <p class="page-subtitle">${vehicles.length} vehicle${vehicles.length !== 1 ? 's' : ''} registered</p>
+      </div>
+      <button class="btn btn-primary" onclick="openAddModal()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path stroke-linecap="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        Add Vehicle
+      </button>
+    </div>
+
+    ${vehicles.length === 0 ? `
+      <div class="empty-state">
+        <div class="empty-icon">🚗</div>
+        <div class="empty-title">No vehicles yet</div>
+        <div class="empty-desc">Add your first vehicle to start tracking maintenance</div>
+        <button class="btn btn-primary" style="margin-top:1rem" onclick="openAddModal()">Add My First Vehicle</button>
+      </div>
+    ` : `
+      <div class="vehicle-grid">
+        ${vehicles.map(v => {
+          const s = MAC.utils.getVehicleStatus(v.id);
+          const logs = MAC.logs.forVehicle(v.id);
+          const lastLog = logs.sort((a,b) => new Date(b.serviceDate)-new Date(a.serviceDate))[0];
+          return `<div class="vehicle-card">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between">
+              <div class="vehicle-card-type">${v.type === 'car' ? '🚗' : '🏍️'}</div>
+              <span class="badge badge-${s.cls.replace('status-','')}">${s.label}</span>
+            </div>
+            <div class="vehicle-name">${MAC.utils.escapeHtml(v.brand)} ${MAC.utils.escapeHtml(v.model)}</div>
+            <div class="vehicle-plate">${MAC.utils.escapeHtml(v.plate)}</div>
+            <div class="vehicle-meta">${v.year} · ${v.colour} · ${v.fuelType} · ${v.mileage ? parseInt(v.mileage).toLocaleString() + ' km' : '—'}</div>
+            <div style="margin-top:.6rem;font-size:.78rem;color:var(--muted)">
+              ${lastLog ? `Last service: ${MAC.utils.formatDate(lastLog.serviceDate)}` : 'No service records'}
+              · ${logs.length} record${logs.length !== 1 ? 's' : ''}
+            </div>
+            <div class="vehicle-actions">
+              <button class="btn btn-outline btn-sm" onclick="openEditModal(${v.id})">Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="openDeleteModal(${v.id})">Delete</button>
+              <a href="maintenance.html?vehicle=${v.id}" class="btn btn-outline btn-sm">View Logs</a>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    `}
+  `;
+}
+
+function openAddModal() {
+  document.getElementById('modalTitle').textContent = 'Add Vehicle';
+  document.getElementById('editId').value = '';
+  ['vType','vPlate','vBrand','vModel','vYear','vColour','vMileage'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '';
+  });
+  document.getElementById('vFuel').value = 'Petrol';
+  document.getElementById('vehicleModal').classList.add('open');
+}
+
+function openEditModal(id) {
+  const v = MAC.vehicles.get(id);
+  if (!v) return;
+  document.getElementById('modalTitle').textContent = 'Edit Vehicle';
+  document.getElementById('editId').value = id;
+  document.getElementById('vType').value = v.type;
+  document.getElementById('vPlate').value = v.plate;
+  document.getElementById('vBrand').value = v.brand;
+  document.getElementById('vModel').value = v.model;
+  document.getElementById('vYear').value = v.year;
+  document.getElementById('vColour').value = v.colour;
+  document.getElementById('vFuel').value = v.fuelType;
+  document.getElementById('vMileage').value = v.mileage;
+  document.getElementById('vehicleModal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('vehicleModal').classList.remove('open'); }
+
+function saveVehicle() {
+  const data = {
+    type: document.getElementById('vType').value,
+    plate: document.getElementById('vPlate').value.trim().toUpperCase(),
+    brand: document.getElementById('vBrand').value.trim(),
+    model: document.getElementById('vModel').value.trim(),
+    year: document.getElementById('vYear').value,
+    colour: document.getElementById('vColour').value.trim(),
+    fuelType: document.getElementById('vFuel').value,
+    mileage: document.getElementById('vMileage').value,
+    userId: MAC.auth.getUser().id
+  };
+  if (!data.plate || !data.brand || !data.model) { MAC.utils.toast('Please fill in required fields', 'error'); return; }
+  const editId = parseInt(document.getElementById('editId').value);
+  if (editId) {
+    MAC.vehicles.update(editId, data);
+    MAC.utils.toast('Vehicle updated successfully');
+  } else {
+    MAC.vehicles.create(data);
+    MAC.utils.toast('Vehicle added successfully');
+  }
+  closeModal();
+  renderPage();
+}
+
+function openDeleteModal(id) {
+  document.getElementById('deleteId').value = id;
+  document.getElementById('deleteModal').classList.add('open');
+}
+
+function confirmDelete() {
+  const id = parseInt(document.getElementById('deleteId').value);
+  MAC.vehicles.delete(id);
+  document.getElementById('deleteModal').classList.remove('open');
+  MAC.utils.toast('Vehicle deleted');
+  renderPage();
+}
+
+renderPage();
+</script>
+</body>
+</html>
