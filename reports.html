@@ -6,13 +6,13 @@
 <title>Reports & Share — MyAutoCare</title>
 <link rel="stylesheet" href="app.css"/>
 <style>
-.report-preview { background: white; color: #111; border-radius: var(--radius); padding: 2rem; font-family: 'Urbanist', sans-serif; }
+.report-preview { background: white; color: #111; border-radius: var(--r); padding: 2rem; font-family: 'Urbanist', sans-serif; }
 .report-preview h2 { color: #030c04; border-bottom: 3px solid #35e857; padding-bottom: .5rem; margin-bottom: 1rem; }
 .rp-table { width: 100%; border-collapse: collapse; font-size: .8rem; margin-top: .75rem; }
-.rp-table th { background: #0b1a0d; color: #9ffcad; padding: .5rem; text-align: left; }
+.rp-table th { background: #0f1a0e; color: #d3f7e1; padding: .5rem; text-align: left; }
 .rp-table td { padding: .5rem; border-bottom: 1px solid #e5e7eb; }
 .rp-table tr:nth-child(even) td { background: #f9fafb; }
-.share-link-box { background: var(--g600); border: 1px solid var(--borderB); border-radius: var(--radius-sm); padding: .75rem 1rem; display: flex; align-items: center; gap: .75rem; }
+.share-link-box { background: var(--stone); border: 1px solid var(--line); border-radius: var(--r-sm); padding: .75rem 1rem; display: flex; align-items: center; gap: .75rem; }
 .share-link-box input { flex: 1; background: none; border: none; color: var(--accent); font-size: .85rem; outline: none; }
 </style>
 </head>
@@ -56,10 +56,10 @@ function renderPage() {
         <div class="card">
           <div class="card-title" style="margin-bottom:1rem">Select Vehicle</div>
           ${vehicles.length ? vehicles.map(veh => `
-            <div onclick="selectedVehicleId=${veh.id};renderPage()" style="display:flex;align-items:center;gap:.75rem;padding:.75rem;border-radius:var(--radius-sm);cursor:pointer;border:1px solid ${veh.id===selectedVehicleId?'var(--accent)':'var(--border)'};background:${veh.id===selectedVehicleId?'var(--accent-dim)':'transparent'};margin-bottom:.5rem;transition:all .2s">
+            <div onclick="selectedVehicleId=${veh.id};renderPage()" style="display:flex;align-items:center;gap:.75rem;padding:.75rem;border-radius:var(--r-sm);cursor:pointer;border:1px solid ${veh.id===selectedVehicleId?'var(--accent)':'var(--line)'};background:${veh.id===selectedVehicleId?'var(--accent-dim)':'transparent'};margin-bottom:.5rem;transition:all .2s">
               <div style="font-size:1.3rem">${veh.type==='car'?'🚗':'🏍️'}</div>
               <div>
-                <div style="font-weight:600;color:var(--white);font-size:.9rem">${MAC.utils.escapeHtml(veh.brand+' '+veh.model)}</div>
+                <div style="font-weight:600;color:var(--heading);font-size:.9rem">${MAC.utils.escapeHtml(veh.brand+' '+veh.model)}</div>
                 <div style="font-size:.75rem;color:var(--accent)">${MAC.utils.escapeHtml(veh.plate)}</div>
               </div>
             </div>
@@ -134,7 +134,7 @@ function renderPage() {
                     <td>${MAC.utils.escapeHtml(l.workshopName)}</td>
                     <td><strong>${parseFloat(l.cost).toFixed(2)}</strong></td>
                   </tr>`).join('')}
-                  <tr style="background:#f0fdf2">
+                  <tr style="background:var(--accent-pale)">
                     <td colspan="4"><strong>Total Maintenance Cost</strong></td>
                     <td><strong style="color:#1a6b2a">RM ${totalCost.toFixed(2)}</strong></td>
                   </tr>

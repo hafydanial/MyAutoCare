@@ -23,10 +23,10 @@ const chartOpts = {
   responsive: true, maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
-    tooltip: { backgroundColor: '#102213', titleColor: '#9ffcad', bodyColor: '#b8dfc0', borderColor: '#35e857', borderWidth: 1, callbacks: { label: ctx => 'RM ' + ctx.parsed.y.toFixed(2) } }
+    tooltip: { backgroundColor: '#0f1a0e', titleColor: '#d3f7e1', bodyColor: '#8c9e8b', borderColor: '#1db954', borderWidth: 1, callbacks: { label: ctx => 'RM ' + ctx.parsed.y.toFixed(2) } }
   },
   scales: {
-    x: { grid: { color: 'rgba(53,232,87,.05)' }, ticks: { color: '#6db37c', font: { size: 11 } } },
+    x: { grid: { color: 'rgba(53,232,87,.05)' }, ticks: { color: '#8c9e8b', font: { size: 11 } } },
     y: { grid: { color: 'rgba(53,232,87,.05)' }, ticks: { color: '#6db37c', callback: v => 'RM' + v } }
   }
 };
@@ -59,7 +59,7 @@ const avgCost = allLogs.length ? totalSpent / allLogs.length : 0;
 const topType = typeLabels.length ? typeLabels[typeData.indexOf(Math.max(...typeData))] : '—';
 const mostExpensive = allLogs.length ? [...allLogs].sort((a,b) => parseFloat(b.cost)-parseFloat(a.cost))[0] : null;
 
-const colors = ['#35e857','#9ffcad','#1f4a2a','#fbbf24','#60a5fa','#f87171','#c084fc','#fb923c','#34d399','#a78bfa','#f472b6','#38bdf8'];
+const colors = ['#35e857','#9ffcad','#bbf7d0','#fbbf24','#60a5fa','#f87171','#c084fc','#fb923c','#34d399','#a78bfa','#f472b6','#38bdf8'];
 
 document.getElementById('page-content').innerHTML = `
   <div class="page-header">
@@ -114,7 +114,7 @@ document.getElementById('page-content').innerHTML = `
       <div style="height:260px"><canvas id="typeChart"></canvas></div>
     </div>
     <div class="card" style="padding:0">
-      <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)">
+      <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--line)">
         <div class="card-title">Service Type Breakdown</div>
       </div>
       <div class="table-wrap">
@@ -138,11 +138,11 @@ document.getElementById('page-content').innerHTML = `
   </div>
 
   ${mostExpensive ? `
-    <div class="card" style="margin-top:1.25rem;background:rgba(53,232,87,.04);border-color:var(--borderB)">
+    <div class="card" style="margin-top:1.25rem;background:rgba(53,232,87,.04);border-color:var(--line2)">
       <div style="display:flex;align-items:center;gap:.75rem">
         <div style="font-size:1.5rem">💸</div>
         <div>
-          <div style="font-family:var(--fd);font-weight:700;color:var(--white)">Most Expensive Service</div>
+          <div style="font-family:var(--sans);font-weight:700;color:var(--heading)">Most Expensive Service</div>
           <div style="font-size:.875rem;color:var(--muted)">${MAC.utils.escapeHtml(mostExpensive.serviceType)} · ${MAC.utils.formatDate(mostExpensive.serviceDate)} · ${MAC.utils.escapeHtml(mostExpensive.workshopName)} · <strong style="color:var(--accent)">${MAC.utils.formatCurrency(mostExpensive.cost)}</strong></div>
         </div>
       </div>
@@ -151,7 +151,7 @@ document.getElementById('page-content').innerHTML = `
 `;
 
 if (typeof Chart !== 'undefined') {
-  Chart.defaults.color = '#6db37c';
+  Chart.defaults.color = '#8c9e8b';
   Chart.defaults.font.family = "'Urbanist', sans-serif";
 
   new Chart(document.getElementById('trendChart'), {
@@ -165,13 +165,13 @@ if (typeof Chart !== 'undefined') {
   new Chart(document.getElementById('vehChart'), {
     type: 'doughnut',
     data: { labels: vehLabels.length ? vehLabels : ['No Data'], datasets: [{ data: vehData.length ? vehData : [1], backgroundColor: colors, borderWidth: 0 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: true, position: 'bottom', labels: { color: '#b8dfc0', font: { size: 10 }, padding: 8, boxWidth: 8 } }, tooltip: { backgroundColor: '#102213', titleColor: '#9ffcad', bodyColor: '#b8dfc0', borderColor: '#35e857', borderWidth: 1, callbacks: { label: ctx => 'RM ' + ctx.parsed.toFixed(2) } } } }
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: true, position: 'bottom', labels: { color: '#3d4e3c', font: { size: 10 }, padding: 8, boxWidth: 8 } }, tooltip: { backgroundColor: '#0f1a0e', titleColor: '#d3f7e1', bodyColor: '#8c9e8b', borderColor: '#1db954', borderWidth: 1, callbacks: { label: ctx => 'RM ' + ctx.parsed.toFixed(2) } } } }
   });
 
   new Chart(document.getElementById('typeChart'), {
     type: 'bar',
     data: { labels: typeLabels.length ? typeLabels : ['No Data'], datasets: [{ data: typeData.length ? typeData : [0], backgroundColor: colors.map(c => c + '33'), borderColor: colors, borderWidth: 2, borderRadius: 6 }] },
-    options: { ...chartOpts, indexAxis: 'y', plugins: { ...chartOpts.plugins }, scales: { x: { ...chartOpts.scales.x, ticks: { ...chartOpts.scales.x.ticks, callback: v => 'RM' + v } }, y: { grid: { display: false }, ticks: { color: '#6db37c', font: { size: 11 } } } } }
+    options: { ...chartOpts, indexAxis: 'y', plugins: { ...chartOpts.plugins }, scales: { x: { ...chartOpts.scales.x, ticks: { ...chartOpts.scales.x.ticks, callback: v => 'RM' + v } }, y: { grid: { display: false }, ticks: { color: '#8c9e8b', font: { size: 11 } } } } }
   });
 }
 

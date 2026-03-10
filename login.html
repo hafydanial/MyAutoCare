@@ -6,21 +6,21 @@
 <title>Login — MyAutoCare</title>
 <link rel="stylesheet" href="app.css"/>
 <style>
-body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1.5rem; }
+body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1.5rem; background: var(--stone); }
 .auth-wrap { width: 100%; max-width: 440px; }
 .auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2.5rem; justify-content: center; }
 .auth-logo .logo-mark { width: 42px; height: 42px; border-radius: 11px; font-size: 20px; }
-.auth-logo .logo-text { font-family: var(--fd); font-weight: 800; font-size: 1.3rem; color: var(--white); }
-.auth-logo .logo-text em { color: var(--accent); font-style: normal; }
-.auth-card { background: var(--g700); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; }
-.auth-title { font-family: var(--fd); font-weight: 800; font-size: 1.6rem; color: var(--white); margin-bottom: .4rem; }
+.auth-logo .logo-text { font-family: var(--sans); font-weight: 700; font-size: 1.2rem; color: var(--heading); }
+.auth-logo .logo-text b { color: var(--accent); font-weight: 800; }
+.auth-card { background: var(--white); border: 1px solid var(--line); border-radius: var(--r); padding: 2.5rem; box-shadow: var(--sh); }
+.auth-title { font-family: var(--sans); font-weight: 800; font-size: 1.55rem; color: var(--heading); margin-bottom: .4rem; }
 .auth-subtitle { font-size: .9rem; color: var(--muted); margin-bottom: 2rem; }
 .auth-link { color: var(--accent); text-decoration: none; font-weight: 600; }
 .auth-link:hover { text-decoration: underline; }
-.demo-box { background: var(--accent-dim); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .9rem 1.1rem; margin-bottom: 1.5rem; font-size: .8rem; color: var(--muted); }
-.demo-box strong { color: var(--accent); }
+.demo-box { background: var(--accent-pale); border: 1px solid var(--accent-pale2); border-radius: var(--r-sm); padding: .9rem 1.1rem; margin-bottom: 1.5rem; font-size: .82rem; color: var(--body); }
+.demo-box strong { color: var(--accent-h); }
 .divider { display: flex; align-items: center; gap: .75rem; margin: 1.25rem 0; color: var(--muted); font-size: .8rem; }
-.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 </style>
 </head>
 <body>
@@ -28,7 +28,7 @@ body { display: flex; align-items: center; justify-content: center; min-height: 
 <div class="auth-wrap">
   <div class="auth-logo">
     <div class="logo-mark">M</div>
-    <div class="logo-text">My<em>Auto</em>Care</div>
+    <div class="logo-text">My<b>Auto</b>Care</div>
   </div>
   <div class="auth-card">
     <h1 class="auth-title">Welcome back</h1>

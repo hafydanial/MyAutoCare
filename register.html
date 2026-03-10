@@ -6,14 +6,14 @@
 <title>Register — MyAutoCare</title>
 <link rel="stylesheet" href="app.css"/>
 <style>
-body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1.5rem; }
+body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1.5rem; background: var(--stone); }
 .auth-wrap { width: 100%; max-width: 480px; }
 .auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2.5rem; justify-content: center; }
 .auth-logo .logo-mark { width: 42px; height: 42px; border-radius: 11px; font-size: 20px; }
-.auth-logo .logo-text { font-family: var(--fd); font-weight: 800; font-size: 1.3rem; color: var(--white); }
+.auth-logo .logo-text { font-family: var(--sans); font-weight: 800; font-size: 1.2rem; color: var(--heading); }
 .auth-logo .logo-text em { color: var(--accent); font-style: normal; }
-.auth-card { background: var(--g700); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; }
-.auth-title { font-family: var(--fd); font-weight: 800; font-size: 1.6rem; color: var(--white); margin-bottom: .4rem; }
+.auth-card { background: var(--white); border: 1px solid var(--line); border-radius: var(--r); padding: 2.5rem; }
+.auth-title { font-family: var(--sans); font-weight: 800; font-size: 1.6rem; color: var(--heading); margin-bottom: .4rem; }
 .auth-subtitle { font-size: .9rem; color: var(--muted); margin-bottom: 2rem; }
 .auth-link { color: var(--accent); text-decoration: none; font-weight: 600; }
 .auth-link:hover { text-decoration: underline; }
@@ -24,7 +24,7 @@ body { display: flex; align-items: center; justify-content: center; min-height: 
 <div class="auth-wrap">
   <div class="auth-logo">
     <div class="logo-mark">M</div>
-    <div class="logo-text">My<em>Auto</em>Care</div>
+    <div class="logo-text">My<b>Auto</b>Care</div>
   </div>
   <div class="auth-card">
     <h1 class="auth-title">Create your account</h1>

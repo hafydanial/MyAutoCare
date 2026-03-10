@@ -145,16 +145,16 @@ function renderPage() {
           const status = r.status === 'done' ? 'done' : r.computedStatus;
           const daysUntil = Math.ceil((new Date(r.dueDate) - new Date()) / 86400000);
           const daysLabel = daysUntil < 0 ? `${Math.abs(daysUntil)} days ago` : daysUntil === 0 ? 'Today' : `in ${daysUntil} days`;
-          return `<div class="card" style="padding:1.25rem;border-left:3px solid ${status==='overdue'?'var(--danger)':status==='done'?'var(--accent)':status==='soon'?'var(--warning)':'var(--border)'}">
+          return `<div class="card" style="padding:1.25rem;border-left:3px solid ${status==='overdue'?'var(--danger)':status==='done'?'var(--accent)':status==='soon'?'var(--warning)':'var(--line)'}">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem">
               <div style="flex:1">
                 <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem">
-                  <span style="font-family:var(--fd);font-weight:700;color:var(--white)">${MAC.utils.escapeHtml(r.type)}</span>
+                  <span style="font-family:var(--sans);font-weight:700;color:var(--heading)">${MAC.utils.escapeHtml(r.type)}</span>
                   ${getStatusBadge(status)}
                 </div>
                 <div style="font-size:.85rem;color:var(--muted)">
                   ${v ? `<span style="color:var(--accent)">${MAC.utils.escapeHtml(v.plate)}</span> · ${MAC.utils.escapeHtml(v.brand+' '+v.model)} · ` : ''}
-                  Due: <strong style="color:var(--white)">${MAC.utils.formatDate(r.dueDate)}</strong>
+                  Due: <strong style="color:var(--heading)">${MAC.utils.formatDate(r.dueDate)}</strong>
                   <span style="color:${status==='overdue'?'var(--danger)':status==='soon'?'var(--warning)':'var(--muted)'}">(${daysLabel})</span>
                 </div>
                 ${r.notes ? `<div style="font-size:.8rem;color:var(--muted);margin-top:.35rem">${MAC.utils.escapeHtml(r.notes)}</div>` : ''}

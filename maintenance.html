@@ -177,8 +177,8 @@ function renderPage() {
               ${logs.map(l => {
                 const v = MAC.vehicles.get(l.vehicleId);
                 return `<tr>
-                  <td style="color:var(--white);white-space:nowrap">${MAC.utils.formatDate(l.serviceDate)}</td>
-                  <td>${v ? `<div style="font-weight:600;color:var(--white);font-size:.85rem">${MAC.utils.escapeHtml(v.brand+' '+v.model)}</div><div style="font-size:.75rem;color:var(--accent)">${MAC.utils.escapeHtml(v.plate)}</div>` : '—'}</td>
+                  <td style="color:var(--heading);white-space:nowrap">${MAC.utils.formatDate(l.serviceDate)}</td>
+                  <td>${v ? `<div style="font-weight:600;color:var(--heading);font-size:.85rem">${MAC.utils.escapeHtml(v.brand+' '+v.model)}</div><div style="font-size:.75rem;color:var(--accent)">${MAC.utils.escapeHtml(v.plate)}</div>` : '—'}</td>
                   <td><span class="badge badge-info">${MAC.utils.escapeHtml(l.serviceType)}</span></td>
                   <td style="color:var(--muted)">${l.mileageAtService ? parseInt(l.mileageAtService).toLocaleString() + ' km' : '—'}</td>
                   <td style="font-size:.85rem">${MAC.utils.escapeHtml(l.workshopName)}</td>
