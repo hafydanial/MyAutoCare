@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MyAutoCare — Smart Vehicle Maintenance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet"/>
+<style>
+/* ─── RESET ─────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+
+/* ─── TOKENS ─────────────────────────────────────────── */
+:root{
+  --white:#ffffff;
+  --stone:#f7f8f6;
+  --stone2:#f0f2ef;
+  --line:#e4e8e3;
+  --line2:#cdd4cc;
+  --muted:#8c9e8b;
+  --body:#3d4e3c;
+  --heading:#0f1a0e;
+  --accent:#1db954;
+  --accent-hover:#18a349;
+  --accent-pale:#edfbf2;
+  --accent-pale2:#d3f7e1;
+  --accent-glow:rgba(29,185,84,.18);
+  --serif:'Instrument Serif',Georgia,serif;
+  --sans:'Plus Jakarta Sans',system-ui,sans-serif;
+  --r:18px;--r-sm:12px;--r-xs:8px;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+
+body{
+  background:var(--white);
+  color:var(--body);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.7;
+  overflow-x:hidden;
+}
+
+/* ─── NAV ────────────────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(1.5rem,5vw,4rem);
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border-bottom:1px solid transparent;
+  transition:border-color .3s,box-shadow .3s;
+}
+nav.stuck{border-color:var(--line);box-shadow:0 2px 24px rgba(0,0,0,.06);}
+
+.nav-logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.nav-logo-icon{
+  width:34px;height:34px;border-radius:9px;
+  background:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--sans);font-weight:800;font-size:15px;color:#fff;
+  letter-spacing:-.5px;
+}
+.nav-logo-text{font-family:var(--sans);font-weight:700;font-size:1rem;color:var(--heading);letter-spacing:-.02em;}
+.nav-logo-text b{color:var(--accent);font-weight:800;}
+
+.nav-links{display:flex;gap:2rem;list-style:none;}
+.nav-links a{text-decoration:none;font-size:.875rem;font-weight:500;color:var(--muted);transition:color .2s;}
+.nav-links a:hover{color:var(--heading);}
+
+.nav-right{display:flex;align-items:center;gap:.6rem;}
+.nav-btn-ghost{
+  text-decoration:none;font-size:.85rem;font-weight:600;
+  color:var(--body);padding:.44rem 1rem;border-radius:99px;
+  border:1.5px solid var(--line2);transition:all .2s;
+}
+.nav-btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.nav-btn-solid{
+  text-decoration:none;font-size:.85rem;font-weight:700;
+  color:#fff;background:var(--accent);
+  padding:.48rem 1.15rem;border-radius:99px;
+  transition:all .2s;
+}
+.nav-btn-solid:hover{background:var(--accent-hover);transform:translateY(-1px);box-shadow:0 6px 20px var(--accent-glow);}
+.nav-ham{display:none;background:none;border:none;cursor:pointer;color:var(--heading);}
+
+/* ─── HERO ───────────────────────────────────────────── */
+.hero{
+  min-height:100svh;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  padding-top:64px;
+  overflow:hidden;
+}
+
+/* left col */
+.hero-copy{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(3rem,7vw,7rem) clamp(2rem,5vw,5rem) clamp(3rem,7vw,7rem) clamp(2rem,7vw,7rem);
+  gap:1.6rem;
+}
+.hero-label{
+  display:inline-flex;align-items:center;gap:.5rem;width:fit-content;
+  background:var(--accent-pale);border:1px solid var(--accent-pale2);
+  color:var(--accent-hover);
+  font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:.3rem .85rem;border-radius:99px;
+}
+.hero-label::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+
+.hero-h1{
+  font-family:var(--serif);
+  font-size:clamp(2.8rem,5.5vw,4.8rem);
+  color:var(--heading);
+  line-height:1.05;
+  letter-spacing:-.02em;
+}
+.hero-h1 em{font-style:italic;color:var(--accent);}
+
+.hero-lead{
+  font-size:clamp(.95rem,1.2vw,1.1rem);
+  color:var(--muted);
+  line-height:1.75;
+  max-width:420px;
+  font-weight:400;
+}
+
+.hero-cta{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;}
+.btn-solid{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:var(--accent);color:#fff;
+  font-family:var(--sans);font-size:.9rem;font-weight:700;
+  padding:.72rem 1.6rem;border-radius:99px;
+  text-decoration:none;transition:all .25s var(--ease);
+  border:none;cursor:pointer;
+}
+.btn-solid:hover{background:var(--accent-hover);transform:translateY(-2px);box-shadow:0 10px 30px var(--accent-glow);}
+.btn-solid svg{width:14px;height:14px;}
+.btn-ghost{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:transparent;color:var(--body);
+  font-family:var(--sans);font-size:.9rem;font-weight:600;
+  padding:.72rem 1.4rem;border-radius:99px;
+  text-decoration:none;transition:all .2s;
+  border:1.5px solid var(--line2);
+}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+
+.hero-kpis{
+  display:flex;gap:2.25rem;
+  padding-top:1rem;
+  border-top:1px solid var(--line);
+}
+.kpi-val{font-family:var(--sans);font-weight:800;font-size:1.65rem;color:var(--heading);line-height:1;}
+.kpi-lbl{font-size:.72rem;color:var(--muted);margin-top:.2rem;font-weight:500;}
+
+/* right col — full bleed photo with mask */
+.hero-visual{
+  position:relative;overflow:hidden;
+  background:var(--white);
+}
+.hero-visual img{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  object-position:60% center;
+  filter:brightness(1) saturate(1.05);
+  transition:transform 8s var(--ease);
+}
+.hero-visual:hover img{transform:scale(1.04);}
+
+/* Left-side fade so photo bleeds into white copy area */
+.hero-visual::before{
+  content:'';position:absolute;inset:0;z-index:1;
+  background:
+    linear-gradient(to right, rgba(255,255,255,.85) 0%, rgba(255,255,255,.4) 20%, rgba(255,255,255,0) 45%),
+    linear-gradient(to bottom, rgba(255,255,255,.3) 0%, transparent 30%);
+}
+/* Bottom green tint */
+.hero-visual::after{
+  content:'';position:absolute;inset:0;z-index:1;
+  background:linear-gradient(to top,rgba(29,185,84,.18) 0%,transparent 50%);
+}
+
+.hero-pill{
+  position:absolute;bottom:2rem;left:2rem;z-index:2;
+  background:rgba(255,255,255,.95);
+  backdrop-filter:blur(16px);
+  border:1px solid var(--line);
+  border-radius:var(--r-sm);
+  padding:.85rem 1.1rem;
+  display:flex;align-items:center;gap:.75rem;
+  box-shadow:0 8px 32px rgba(0,0,0,.1);
+  min-width:210px;
+}
+.pill-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:blink 2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.4);}}
+.pill-title{font-weight:700;font-size:.82rem;color:var(--heading);}
+.pill-sub{font-size:.72rem;color:var(--muted);}
+
+/* ─── RIBBON ─────────────────────────────────────────── */
+.ribbon{
+  background:var(--stone);
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  padding:.9rem clamp(1.5rem,5vw,4rem);
+  display:flex;align-items:center;justify-content:center;
+  gap:clamp(1.5rem,4vw,3.5rem);
+  flex-wrap:wrap;
+}
+.rib-item{display:flex;align-items:center;gap:.5rem;font-size:.8rem;font-weight:600;color:var(--body);}
+.rib-item svg{color:var(--accent);width:14px;height:14px;flex-shrink:0;}
+
+/* ─── SECTION BASE ───────────────────────────────────── */
+.sec{padding:clamp(4rem,8vw,7rem) clamp(1.5rem,7vw,7rem);}
+.sec-tag{
+  display:inline-block;
+  font-size:.67rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent-hover);margin-bottom:.75rem;
+}
+.sec-h2{
+  font-family:var(--serif);
+  font-size:clamp(2rem,3.5vw,3.2rem);
+  color:var(--heading);line-height:1.1;letter-spacing:-.025em;
+  margin-bottom:.9rem;
+}
+.sec-h2 em{font-style:italic;color:var(--accent);}
+.sec-lead{font-size:1rem;color:var(--muted);max-width:520px;line-height:1.8;}
+.sec-head{margin-bottom:3.5rem;}
+.sec-head.c{text-align:center;}
+.sec-head.c .sec-lead{margin:0 auto;}
+
+/* ─── FEATURES ───────────────────────────────────────── */
+#features{background:var(--white);}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);}
+.feat-cell{
+  background:var(--white);
+  padding:2rem 1.75rem;
+  transition:background .2s;
+  position:relative;overflow:hidden;
+}
+.feat-cell::after{
+  content:'';position:absolute;
+  top:0;left:0;right:0;height:2px;
+  background:var(--accent);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .35s var(--ease);
+}
+.feat-cell:hover{background:var(--stone);}
+.feat-cell:hover::after{transform:scaleX(1);}
+.feat-ico{
+  width:42px;height:42px;border-radius:var(--r-xs);
+  background:var(--accent-pale);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:1rem;
+}
+.feat-ico svg{width:20px;height:20px;color:var(--accent);}
+.feat-name{font-family:var(--sans);font-weight:700;font-size:.97rem;color:var(--heading);margin-bottom:.4rem;}
+.feat-text{font-size:.85rem;color:var(--muted);line-height:1.7;}
+.feat-chip{
+  margin-top:.9rem;display:inline-block;
+  font-size:.67rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--accent-hover);background:var(--accent-pale);
+  padding:.18rem .6rem;border-radius:99px;
+}
+
+/* ─── FULL BLEED PHOTO SECTION ───────────────────────── */
+.photo-split{display:grid;grid-template-columns:1fr 1fr;min-height:580px;overflow:hidden;}
+.photo-split.flip{direction:rtl;}
+.photo-split.flip>*{direction:ltr;}
+
+.ps-img{position:relative;overflow:hidden;}
+.ps-img img{
+  width:100%;height:100%;
+  object-fit:cover;
+  filter:brightness(.85) saturate(1.08);
+  transition:transform .9s var(--ease);
+}
+.ps-img:hover img{transform:scale(1.04);}
+
+/* Gradient mask to blend into content side */
+.ps-img .mask-r{position:absolute;inset:0;background:linear-gradient(to right,transparent 65%,var(--stone) 100%);}
+.ps-img .mask-l{position:absolute;inset:0;background:linear-gradient(to left,transparent 65%,var(--white) 100%);}
+.ps-img .mask-green{position:absolute;inset:0;background:linear-gradient(to top,rgba(29,185,84,.12) 0%,transparent 55%);}
+
+.ps-content{
+  background:var(--stone);
+  display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(2.5rem,5vw,5rem) clamp(2rem,5vw,4.5rem);
+  gap:1.4rem;
+}
+.ps-content.bg-white{background:var(--white);}
+
+.check-list{display:flex;flex-direction:column;gap:.8rem;margin-top:.4rem;}
+.check-item{
+  display:flex;align-items:flex-start;gap:.85rem;
+  background:var(--white);border:1px solid var(--line);
+  border-radius:var(--r-sm);padding:.85rem 1rem;
+  transition:border-color .2s,box-shadow .2s;
+}
+.ps-content.bg-white .check-item{background:var(--stone);}
+.check-item:hover{border-color:var(--accent-pale2);box-shadow:0 4px 16px rgba(0,0,0,.05);}
+.check-ico{
+  width:32px;height:32px;border-radius:7px;
+  background:var(--accent-pale);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.check-ico svg{width:15px;height:15px;color:var(--accent);}
+.check-t{font-weight:700;font-size:.875rem;color:var(--heading);}
+.check-s{font-size:.78rem;color:var(--muted);margin-top:.08rem;}
+
+/* ─── HOW IT WORKS ───────────────────────────────────── */
+#how{background:var(--white);}
+.how-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative;}
+.how-grid::before{
+  content:'';position:absolute;
+  top:1.9rem;left:calc(12.5% + 1rem);right:calc(12.5% + 1rem);
+  height:1px;background:var(--line2);z-index:0;
+}
+.how-step{
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;padding:0 1.25rem;position:relative;z-index:1;
+}
+.how-num{
+  width:40px;height:40px;border-radius:50%;
+  background:var(--white);border:1.5px solid var(--line2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--sans);font-weight:800;font-size:.88rem;color:var(--muted);
+  margin-bottom:1.1rem;transition:all .3s;
+}
+.how-step:hover .how-num{background:var(--accent);border-color:var(--accent);color:#fff;transform:scale(1.1);}
+.how-title{font-weight:700;font-size:.9rem;color:var(--heading);margin-bottom:.35rem;}
+.how-desc{font-size:.81rem;color:var(--muted);line-height:1.65;}
+
+/* ─── DARK CTA ───────────────────────────────────────── */
+#cta{
+  background:var(--heading);
+  padding:clamp(4rem,7vw,6rem) clamp(1.5rem,7vw,7rem);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:2.5rem;flex-wrap:wrap;
+  position:relative;overflow:hidden;
+}
+#cta::before{
+  content:'';position:absolute;
+  right:-120px;top:-120px;
+  width:480px;height:480px;border-radius:50%;
+  background:radial-gradient(circle,rgba(29,185,84,.12) 0%,transparent 70%);
+}
+#cta::after{
+  content:'';position:absolute;
+  left:300px;bottom:-80px;
+  width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(29,185,84,.07) 0%,transparent 70%);
+}
+.cta-copy{position:relative;z-index:1;}
+.cta-copy .sec-h2{color:#fff;}
+.cta-copy .sec-lead{color:rgba(255,255,255,.45);max-width:480px;}
+.cta-btns{display:flex;gap:.75rem;flex-wrap:wrap;position:relative;z-index:1;}
+.btn-white{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:#fff;color:var(--heading);
+  font-family:var(--sans);font-size:.9rem;font-weight:700;
+  padding:.72rem 1.6rem;border-radius:99px;
+  text-decoration:none;transition:all .2s;
+}
+.btn-white:hover{background:var(--accent-pale);transform:translateY(-1px);}
+.btn-outline-white{
+  display:inline-flex;align-items:center;
+  background:transparent;color:rgba(255,255,255,.6);
+  font-family:var(--sans);font-size:.9rem;font-weight:600;
+  padding:.72rem 1.4rem;border-radius:99px;
+  text-decoration:none;transition:all .2s;
+  border:1.5px solid rgba(255,255,255,.15);
+}
+.btn-outline-white:hover{color:#fff;border-color:rgba(255,255,255,.4);}
+
+/* ─── CONTACT ────────────────────────────────────────── */
+#contact{background:var(--stone);}
+.contact-wrap{display:grid;grid-template-columns:1fr 1.5fr;gap:4rem;align-items:start;}
+.contact-info{display:flex;flex-direction:column;gap:1.2rem;}
+.ci-row{display:flex;align-items:flex-start;gap:.85rem;}
+.ci-icon{
+  width:38px;height:38px;border-radius:var(--r-xs);
+  background:var(--white);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.ci-icon svg{width:16px;height:16px;color:var(--accent);}
+.ci-lbl{font-weight:700;font-size:.82rem;color:var(--heading);}
+.ci-val{font-size:.82rem;color:var(--muted);margin-top:.06rem;}
+
+.cform{display:flex;flex-direction:column;gap:.9rem;background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:2rem;box-shadow:0 2px 16px rgba(0,0,0,.05);}
+.frow2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;}
+.fg{display:flex;flex-direction:column;gap:.35rem;}
+.flbl{font-size:.77rem;font-weight:700;color:var(--heading);}
+.fin,.fsel,.ftxt{
+  background:var(--stone);border:1.5px solid var(--line);
+  border-radius:var(--r-xs);color:var(--heading);
+  padding:.6rem .85rem;font-family:var(--sans);font-size:.875rem;
+  outline:none;transition:border-color .2s,box-shadow .2s;width:100%;
+}
+.fin:focus,.fsel:focus,.ftxt:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);background:var(--white);}
+.fin::placeholder,.ftxt::placeholder{color:var(--muted);}
+.ftxt{resize:vertical;min-height:110px;}
+.fsel option{background:var(--white);}
+
+/* ─── FOOTER ─────────────────────────────────────────── */
+footer{background:var(--white);border-top:1px solid var(--line);padding:3rem clamp(1.5rem,7vw,7rem) 1.75rem;}
+.footer-grid{display:grid;grid-template-columns:2.2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:2.25rem;}
+.foot-brand p{font-size:.82rem;color:var(--muted);line-height:1.7;max-width:230px;margin-top:.85rem;}
+.foot-col h5{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--heading);margin-bottom:.85rem;}
+.foot-col a{display:block;font-size:.82rem;color:var(--muted);text-decoration:none;margin-bottom:.42rem;transition:color .18s;}
+.foot-col a:hover{color:var(--accent);}
+.foot-bottom{padding-top:1.5rem;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:.75rem;color:var(--muted);flex-wrap:wrap;gap:.5rem;}
+
+/* ─── SCROLL REVEAL ──────────────────────────────────── */
+.sr{opacity:0;transform:translateY(24px);transition:opacity .65s var(--ease),transform .65s var(--ease);}
+.sr.d1{transition-delay:.08s;}.sr.d2{transition-delay:.16s;}.sr.d3{transition-delay:.24s;}.sr.d4{transition-delay:.32s;}
+.sr.in{opacity:1;transform:none;}
+
+/* ─── MOBILE NAV DRAWER ──────────────────────────────── */
+#mob-drawer{
+  display:none;position:fixed;
+  top:64px;left:0;right:0;
+  background:rgba(255,255,255,.98);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--line);
+  padding:1.25rem clamp(1.5rem,5vw,4rem);
+  flex-direction:column;gap:.15rem;
+  z-index:400;box-shadow:0 12px 32px rgba(0,0,0,.08);
+}
+#mob-drawer.open{display:flex;}
+#mob-drawer a{padding:.65rem .4rem;font-size:.92rem;font-weight:500;color:var(--body);text-decoration:none;border-bottom:1px solid var(--line);}
+#mob-drawer a:last-child{border-bottom:none;}
+#mob-drawer a:hover{color:var(--accent);}
+
+/* ─── RESPONSIVE ─────────────────────────────────────── */
+@media(max-width:1100px){
+  .feat-grid{grid-template-columns:repeat(2,1fr);}
+  .footer-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;}
+  .hero-copy{padding:3rem clamp(1.5rem,6vw,3rem) 2rem;align-items:center;text-align:center;}
+  .hero-lead{max-width:none;}
+  .hero-cta{justify-content:center;}
+  .hero-kpis{justify-content:center;}
+  .hero-visual{min-height:55vw;}
+  .photo-split{grid-template-columns:1fr;min-height:auto;}
+  .ps-img{min-height:280px;}
+  .ps-img .mask-r,.ps-img .mask-l{display:none;}
+  .how-grid{grid-template-columns:1fr 1fr;}
+  .how-grid::before{display:none;}
+  .how-step{padding:1.25rem;}
+  #cta{flex-direction:column;}
+  .contact-wrap{grid-template-columns:1fr;}
+  .nav-links{display:none;}
+  .nav-ham{display:block;}
+}
+@media(max-width:600px){
+  .sec{padding:3rem 1.5rem;}
+  .feat-grid{grid-template-columns:1fr;background:none;gap:1px;}
+  .how-grid{grid-template-columns:1fr;}
+  .footer-grid{grid-template-columns:1fr;}
+  .frow2{grid-template-columns:1fr;}
+  .hero-kpis{flex-direction:column;align-items:center;gap:1.25rem;}
+  .hero-cta{flex-direction:column;width:100%;}
+  .hero-cta .btn-solid,.hero-cta .btn-ghost{justify-content:center;}
+  .cta-btns{flex-direction:column;}
+  .cta-btns .btn-white,.cta-btns .btn-outline-white{justify-content:center;}
+}
+</style>
+</head>
+<body>
+
+<!-- ░░ NAV ░░ -->
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon">M</div>
+    <span class="nav-logo-text">My<b>Auto</b>Care</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="login.html" class="nav-btn-ghost">Log In</a>
+    <a href="register.html" class="nav-btn-solid">Sign Up Free</a>
+  </div>
+  <button class="nav-ham" id="ham" aria-label="Menu">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="22" height="22">
+      <path stroke-linecap="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+    </svg>
+  </button>
+</nav>
+<div id="mob-drawer"></div>
+
+<!-- ░░ HERO ░░ -->
+<div class="hero">
+  <div class="hero-copy">
+    <div class="hero-label">Smart Vehicle Maintenance</div>
+    <h1 class="hero-h1">Your vehicle,<br/><em>perfectly</em><br/>maintained.</h1>
+    <p class="hero-lead">MyAutoCare helps Malaysian vehicle owners track service history, set smart reminders, and share verified records with buyers — all in one clean platform.</p>
+    <div class="hero-cta">
+      <a href="register.html" class="btn-solid">
+        Get Started Free
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+      </a>
+      <a href="#how" class="btn-ghost">See how it works</a>
+    </div>
+    <div class="hero-kpis">
+      <div><div class="kpi-val">6+</div><div class="kpi-lbl">Core Features</div></div>
+      <div><div class="kpi-val">2</div><div class="kpi-lbl">Vehicle Types</div></div>
+      <div><div class="kpi-val">100%</div><div class="kpi-lbl">Web Based</div></div>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <!-- Real car photo — blends via CSS masks & overlays -->
+    <img
+      src="hero-car.png"
+      alt="Green Aston Martin DBS"
+      loading="eager"
+      style="object-position: center 35%;"
+    />
+    <div class="hero-pill">
+      <div class="pill-dot"></div>
+      <div>
+        <div class="pill-title">Maintenance Due</div>
+        <div class="pill-sub">Next service in 14 days</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ RIBBON ░░ -->
+<div class="ribbon">
+  <div class="rib-item">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+    No installation needed
+  </div>
+  <div class="rib-item">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+    Cars &amp; motorcycles
+  </div>
+  <div class="rib-item">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+    Free to use
+  </div>
+  <div class="rib-item">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+    Works in any browser
+  </div>
+  <div class="rib-item">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+    UiTM CSP600 FYP 2026
+  </div>
+</div>
+
+<!-- ░░ FEATURES ░░ -->
+<section class="sec" id="features">
+  <div class="sec-head c sr">
+    <div class="sec-tag">Everything You Need</div>
+    <h2 class="sec-h2">Built for real <em>vehicle owners</em></h2>
+    <p class="sec-lead">From logging your first oil change to sharing a verified history with a buyer — MyAutoCare covers the full lifecycle of vehicle ownership.</p>
+  </div>
+  <div class="feat-grid">
+    <div class="feat-cell sr">
+      <div class="feat-ico"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25Z"/></svg></div>
+      <div class="feat-name">Maintenance Log Tracking</div>
+      <p class="feat-text">Record every service with date, mileage, cost, and workshop details. Full history always at your fingertips.</p>
+      <span class="feat-chip">Core Feature</span>
+    </div>
+    <div class="feat-cell sr d1">
+      <div class="feat-ico"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/></svg></div>
+      <div class="feat-name">Automated Reminders</div>
+      <p class="feat-text">Smart alerts for upcoming services, road tax renewal, and insurance — days before they're due.</p>
+      <span class="feat-chip">Smart Alerts</span>
+    </div>
+    <div class="feat-cell sr d2">
+      <div class="feat-ico"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg></div>
+      <div class="feat-name">Digital Receipt Storage</div>
+      <p class="feat-text">Store workshop receipts digitally. No more lost paper — everything organised and searchable.</p>
+      <span class="feat-chip">Document Vault</span>
+    </div>
+    <div class="feat-cell sr">
+      <div class="feat-ico"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg></div>
+      <div class="feat-name">Cost Analysis</div>
+      <p class="feat-text">Visual charts showing monthly spending trends and breakdown by service type — know exactly where your money goes.</p>
+      <span class="feat-chip">Insights</span>
+    </div>
+    <div class="feat-cell sr d1">
+      <div class="feat-ico"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path stroke-linecap="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/></svg></div>
+      <div class="feat-name">Find Nearby Workshops</div>
+      <p class="feat-text">Interactive map to locate trusted workshops near you — authorised service centres and independent shops.</p>
+      <span class="feat-chip">Map Integration</span>
+    </div>
+    <div class="feat-cell sr d2">
+      <div class="feat-ico"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"/></svg></div>
+      <div class="feat-name">Vehicle History for Buyers</div>
+      <p class="feat-text">Generate a secure shareable link so buyers can view your verified maintenance history — no login needed.</p>
+      <span class="feat-chip">Trust &amp; Transparency</span>
+    </div>
+  </div>
+</section>
+
+<!-- ░░ PHOTO SPLIT 1 ░░ -->
+<div class="photo-split" style="background:var(--stone);">
+  <div class="ps-img">
+    <img
+      src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=960&q=85&auto=format&fit=crop&crop=center"
+      alt="Driver inside car"
+      loading="lazy"
+      onerror="this.src='https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=960&q=85&auto=format'"
+    />
+    <div class="mask-r"></div>
+    <div class="mask-green"></div>
+  </div>
+  <div class="ps-content">
+    <div class="sec-tag">Smart Management</div>
+    <h2 class="sec-h2" style="font-size:clamp(1.7rem,2.8vw,2.4rem)">Everything tracked,<br/><em>nothing forgotten</em></h2>
+    <p class="sec-lead" style="font-size:.92rem">Whether you drive a Perodua Myvi or a Honda Wave 125, MyAutoCare gives you a complete, organised record of every ringgit spent on your vehicle.</p>
+    <div class="check-list">
+      <div class="check-item sr">
+        <div class="check-ico"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg></div>
+        <div><div class="check-t">Full service history in one place</div><div class="check-s">Every workshop visit, logged with date, mileage, and cost</div></div>
+      </div>
+      <div class="check-item sr d1">
+        <div class="check-ico"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg></div>
+        <div><div class="check-t">Vehicle health status at a glance</div><div class="check-s">Good, Due Soon, or Overdue — always visible on your dashboard</div></div>
+      </div>
+      <div class="check-item sr d2">
+        <div class="check-ico"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg></div>
+        <div><div class="check-t">Multiple vehicles, one account</div><div class="check-s">Manage every vehicle in your household from one dashboard</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ HOW IT WORKS ░░ -->
+<section class="sec" id="how">
+  <div class="sec-head c sr">
+    <div class="sec-tag">Simple Process</div>
+    <h2 class="sec-h2">Up and running <em>in minutes</em></h2>
+    <p class="sec-lead">No technical knowledge required. Sign up, add your vehicle, and start logging straight away.</p>
+  </div>
+  <div class="how-grid">
+    <div class="how-step sr"><div class="how-num">1</div><div class="how-title">Create Account</div><p class="how-desc">Sign up free with your email. Under a minute, no credit card required.</p></div>
+    <div class="how-step sr d1"><div class="how-num">2</div><div class="how-title">Register Vehicle</div><p class="how-desc">Add your car or motorcycle — plate number, brand, model, year, and mileage.</p></div>
+    <div class="how-step sr d2"><div class="how-num">3</div><div class="how-title">Log Maintenance</div><p class="how-desc">Record every service visit with the workshop name, cost, and what was done.</p></div>
+    <div class="how-step sr d3"><div class="how-num">4</div><div class="how-title">Stay Reminded &amp; Share</div><p class="how-desc">Get notified before due dates. Share a verified history link when selling.</p></div>
+  </div>
+</section>
+
+<!-- ░░ PHOTO SPLIT 2 (flipped) ░░ -->
+<div class="photo-split flip" id="about" style="background:var(--white);">
+  <div class="ps-img">
+    <img
+      src="https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=960&q=85&auto=format&fit=crop&crop=center"
+      alt="Mechanic servicing a car"
+      loading="lazy"
+      onerror="this.src='https://images.unsplash.com/photo-1530046339160-ce3e530c7d2f?w=960&q=85&auto=format'"
+    />
+    <div class="mask-l"></div>
+    <div class="mask-green"></div>
+  </div>
+  <div class="ps-content bg-white">
+    <div class="sec-tag">Our Approach</div>
+    <h2 class="sec-h2" style="font-size:clamp(1.7rem,2.8vw,2.4rem)">Designed for <em>Malaysian</em><br/>vehicle owners</h2>
+    <p class="sec-lead" style="font-size:.92rem">Built as a UiTM final year project, MyAutoCare was designed from the ground up to address real pain points in Malaysian vehicle ownership.</p>
+    <div class="check-list">
+      <div class="check-item sr">
+        <div class="check-ico"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg></div>
+        <div><div class="check-t">Inclusive by Design</div><div class="check-s">Supports all vehicle types — sedans, SUVs, motorcycles, scooters</div></div>
+      </div>
+      <div class="check-item sr d1">
+        <div class="check-ico"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg></div>
+        <div><div class="check-t">Transparency First</div><div class="check-s">Verified history reduces fraud in Malaysia's used car market</div></div>
+      </div>
+      <div class="check-item sr d2">
+        <div class="check-ico"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg></div>
+        <div><div class="check-t">Preventive Focus</div><div class="check-s">Stay ahead of maintenance — not reacting to breakdowns</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ DARK CTA ░░ -->
+<section id="cta">
+  <div class="cta-copy">
+    <div class="sec-tag" style="color:rgba(29,185,84,.7)">Get Started Today</div>
+    <h2 class="sec-h2" style="margin-bottom:.75rem">Ready to take control<br/>of your vehicle?</h2>
+    <p class="sec-lead">Join free. No credit card. Works on any device. Start logging your first service in under 2 minutes.</p>
+  </div>
+  <div class="cta-btns">
+    <a href="register.html" class="btn-white">
+      Create Free Account
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path stroke-linecap="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+    </a>
+    <a href="login.html" class="btn-outline-white">I have an account</a>
+  </div>
+</section>
+
+<!-- ░░ CONTACT ░░ -->
+<section class="sec" id="contact">
+  <div class="sec-head sr">
+    <div class="sec-tag">Contact</div>
+    <h2 class="sec-h2">Get in <em>touch</em></h2>
+    <p class="sec-lead">Have a question or feedback? Fill in the form and I'll get back to you within 24 hours.</p>
+  </div>
+  <div class="contact-wrap">
+    <div class="contact-info">
+      <div class="ci-row sr">
+        <div class="ci-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg></div>
+        <div><div class="ci-lbl">Email</div><div class="ci-val"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ddb5bcbba4b9bcb3b4bcb19db0a4bca8a9b2bebcafb8f3beb2b0">[email&#160;protected]</a></div></div>
+      </div>
+      <div class="ci-row sr d1">
+        <div class="ci-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path stroke-linecap="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/></svg></div>
+        <div><div class="ci-lbl">Institution</div><div class="ci-val">Faculty of Computer &amp; Mathematical Sciences, UiTM</div></div>
+      </div>
+      <div class="ci-row sr d2">
+        <div class="ci-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg></div>
+        <div><div class="ci-lbl">Response Time</div><div class="ci-val">Within 24 hours on weekdays</div></div>
+      </div>
+    </div>
+    <form class="cform sr" onsubmit="doSubmit(event)">
+      <div class="frow2">
+        <div class="fg"><label class="flbl">Full Name</label><input type="text" class="fin" placeholder="Ahmad Danial" required/></div>
+        <div class="fg"><label class="flbl">Email Address</label><input type="email" class="fin" placeholder="you@email.com" required/></div>
+      </div>
+      <div class="fg">
+        <label class="flbl">Subject</label>
+        <select class="fsel"><option>General Enquiry</option><option>Bug Report</option><option>Feature Request</option><option>FYP Related</option></select>
+      </div>
+      <div class="fg"><label class="flbl">Message</label><textarea class="ftxt" placeholder="Your message..." required></textarea></div>
+      <button type="submit" class="btn-solid" style="align-self:flex-start" id="sbtn">
+        Send Message
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path stroke-linecap="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+      </button>
+    </form>
+  </div>
+</section>
+
+<!-- ░░ FOOTER ░░ -->
+<footer>
+  <div class="footer-grid">
+    <div class="foot-brand">
+      <a href="#" class="nav-logo" style="text-decoration:none">
+        <div class="nav-logo-icon">M</div>
+        <span class="nav-logo-text" style="margin-left:9px">My<b>Auto</b>Care</span>
+      </a>
+      <p>A smart vehicle maintenance system built for Malaysian owners. UiTM CSP600 Final Year Project 2026.</p>
+    </div>
+    <div class="foot-col">
+      <h5>Platform</h5>
+      <a href="login.html">Log In</a>
+      <a href="register.html">Sign Up</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="workshops.html">Find Workshops</a>
+    </div>
+    <div class="foot-col">
+      <h5>Features</h5>
+      <a href="maintenance.html">Maintenance Log</a>
+      <a href="reminders.html">Reminders</a>
+      <a href="analysis.html">Cost Analysis</a>
+      <a href="reports.html">Reports</a>
+    </div>
+    <div class="foot-col">
+      <h5>Project</h5>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+      <a href="#how">How It Works</a>
+      <a href="#features">Features</a>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>© 2026 MyAutoCare · Hafy Danial Bin Selamat (2023858786) · UiTM CDCS240</span>
+    <span>Supervised by En. Ahmad Zambri Bin Shahuddin · CSP600</span>
+  </div>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// Sticky nav
+const nav = document.getElementById('nav');
+window.addEventListener('scroll',()=>nav.classList.toggle('stuck',scrollY>20),{passive:true});
+
+// Scroll reveal
+const io = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
+},{threshold:.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.sr').forEach(el=>io.observe(el));
+
+// Contact form
+function doSubmit(e){
+  e.preventDefault();
+  const b=document.getElementById('sbtn');
+  b.textContent='Sending…'; b.disabled=true;
+  setTimeout(()=>{
+    b.textContent='✓ Sent!'; b.style.background='var(--accent-hover)';
+    setTimeout(()=>{
+      b.innerHTML='Send Message <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path stroke-linecap="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>';
+      b.disabled=false; b.style.background='';
+      e.target.reset();
+    },3000);
+  },1200);
+}
+
+// Mobile nav
+const ham=document.getElementById('ham');
+const drawer=document.getElementById('mob-drawer');
+const links=[['#features','Features'],['#how','How It Works'],['#about','About'],['#contact','Contact'],['login.html','Log In'],['register.html','Sign Up Free']];
+links.forEach(([h,l])=>{
+  const a=document.cr
