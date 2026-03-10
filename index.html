@@ -416,7 +416,7 @@ footer{background:var(--white);border-top:1px solid var(--line);padding:3rem cla
 .foot-bottom{padding-top:1.5rem;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:.75rem;color:var(--muted);flex-wrap:wrap;gap:.5rem;}
 
 /* ─── SCROLL REVEAL ──────────────────────────────────── */
-.sr{opacity:0;transform:translateY(24px);transition:opacity .65s var(--ease),transform .65s var(--ease);}
+.sr{opacity:1;transform:none;transition:opacity .65s var(--ease),transform .65s var(--ease);}
 .sr.d1{transition-delay:.08s;}.sr.d2{transition-delay:.16s;}.sr.d3{transition-delay:.24s;}.sr.d4{transition-delay:.32s;}
 .sr.in{opacity:1;transform:none;}
 
@@ -788,11 +788,8 @@ footer{background:var(--white);border-top:1px solid var(--line);padding:3rem cla
 const nav = document.getElementById('nav');
 window.addEventListener('scroll',()=>nav.classList.toggle('stuck',scrollY>20),{passive:true});
 
-// Scroll reveal
-const io = new IntersectionObserver(entries=>{
-  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
-},{threshold:.1,rootMargin:'0px 0px -40px 0px'});
-document.querySelectorAll('.sr').forEach(el=>io.observe(el));
+// Scroll reveal — elements always visible
+document.querySelectorAll('.sr').forEach(el=>el.classList.add('in'));
 
 // Contact form
 function doSubmit(e){
