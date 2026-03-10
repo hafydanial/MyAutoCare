@@ -18,17 +18,17 @@ buildLayout('dashboard', 'Dashboard');
 
 // ── EmailJS Reminder Alerts ────────────────────────────
 // Configure these with your EmailJS account (same keys as register.html)
-const EJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';
-const EJS_SERVICE_ID  = 'YOUR_SERVICE_ID';
-const EJS_REMINDER_TEMPLATE = 'YOUR_REMINDER_TEMPLATE_ID'; // Create a 2nd template for reminders
+const EJS_PUBLIC_KEY  = 'Z8M7B3RIWcf-gJJ8u';
+const EJS_SERVICE_ID  = 'service_zyuvjao';
+const EJS_REMINDER_TEMPLATE = 'template_reminder'; // Create a 2nd template for reminders
 
-if (EJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
+if (EJS_PUBLIC_KEY !== 'Z8M7B3RIWcf-gJJ8u') {
   emailjs.init({ publicKey: EJS_PUBLIC_KEY });
 }
 
 // Check and send reminder emails (once per day per reminder)
 async function checkAndSendReminderEmails() {
-  if (EJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') return; // skip if not configured
+  if (EJS_PUBLIC_KEY === 'Z8M7B3RIWcf-gJJ8u') return; // skip if not configured
   const user = MAC.auth.getUser();
   const reminders = MAC.reminders.all().filter(r => r.status !== 'done');
   const sentKey = 'mac_reminder_sent_' + user.id;
