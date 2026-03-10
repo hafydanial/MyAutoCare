@@ -6,6 +6,7 @@
 <title>Dashboard — MyAutoCare</title>
 <link rel="stylesheet" href="app.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 <div id="toast-container"></div>
@@ -14,6 +15,55 @@
 <script src="layout.js"></script>
 <script>
 buildLayout('dashboard', 'Dashboard');
+
+// ── EmailJS Reminder Alerts ────────────────────────────
+// Configure these with your EmailJS account (same keys as register.html)
+const EJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';
+const EJS_SERVICE_ID  = 'YOUR_SERVICE_ID';
+const EJS_REMINDER_TEMPLATE = 'YOUR_REMINDER_TEMPLATE_ID'; // Create a 2nd template for reminders
+
+if (EJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
+  emailjs.init({ publicKey: EJS_PUBLIC_KEY });
+}
+
+// Check and send reminder emails (once per day per reminder)
+async function checkAndSendReminderEmails() {
+  if (EJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') return; // skip if not configured
+  const user = MAC.auth.getUser();
+  const reminders = MAC.reminders.all().filter(r => r.status !== 'done');
+  const sentKey = 'mac_reminder_sent_' + user.id;
+  const sentToday = JSON.parse(localStorage.getItem(sentKey) || '{}');
+  const today = new Date().toDateString();
+
+  for (const r of reminders) {
+    const status = MAC.reminders.getStatus(r.dueDate);
+    // Only alert for overdue or due within notifyDays
+    if (status === 'upcoming') continue;
+    const sentId = r.id + '_' + today;
+    if (sentToday[sentId]) continue; // already sent today
+
+    const vehicle = MAC.vehicles.forUser(user.id).find(v => v.id === r.vehicleId);
+    const vehicleName = vehicle ? vehicle.brand + ' ' + vehicle.model + ' (' + vehicle.plate + ')' : 'your vehicle';
+
+    try {
+      await emailjs.send(EJS_SERVICE_ID, EJS_REMINDER_TEMPLATE, {
+        to_name:      user.name,
+        to_email:     user.email,
+        reminder_type: r.type,
+        vehicle_name: vehicleName,
+        due_date:     MAC.utils.formatDate(r.dueDate),
+        status_label: status === 'overdue' ? '🔴 OVERDUE' : '🟡 Due Soon',
+        notes:        r.notes || 'No additional notes',
+      });
+      sentToday[sentId] = true;
+      localStorage.setItem(sentKey, JSON.stringify(sentToday));
+    } catch(e) {
+      console.warn('Reminder email failed:', e);
+    }
+  }
+}
+
+setTimeout(checkAndSendReminderEmails, 2000); // small delay after page load
 
 const user = MAC.auth.getUser();
 const vehicles = MAC.vehicles.forUser(user.id);

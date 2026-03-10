@@ -6,17 +6,59 @@
 <title>Register — MyAutoCare</title>
 <link rel="stylesheet" href="app.css"/>
 <style>
-body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1.5rem; background: var(--stone); }
-.auth-wrap { width: 100%; max-width: 480px; }
-.auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2.5rem; justify-content: center; }
-.auth-logo .logo-mark { width: 42px; height: 42px; border-radius: 11px; font-size: 20px; }
-.auth-logo .logo-text { font-family: var(--sans); font-weight: 800; font-size: 1.2rem; color: var(--heading); }
-.auth-logo .logo-text em { color: var(--accent); font-style: normal; }
-.auth-card { background: var(--white); border: 1px solid var(--line); border-radius: var(--r); padding: 2.5rem; }
-.auth-title { font-family: var(--sans); font-weight: 800; font-size: 1.6rem; color: var(--heading); margin-bottom: .4rem; }
-.auth-subtitle { font-size: .9rem; color: var(--muted); margin-bottom: 2rem; }
-.auth-link { color: var(--accent); text-decoration: none; font-weight: 600; }
-.auth-link:hover { text-decoration: underline; }
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1.5rem;background:var(--stone);}
+.auth-wrap{width:100%;max-width:480px;}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:2.5rem;justify-content:center;}
+.auth-logo .logo-mark{width:42px;height:42px;border-radius:11px;font-size:20px;}
+.auth-logo .logo-text{font-family:var(--sans);font-weight:800;font-size:1.2rem;color:var(--heading);}
+.auth-logo .logo-text b{color:var(--accent);font-weight:800;}
+.auth-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:2.5rem;box-shadow:var(--sh);}
+.auth-title{font-family:var(--sans);font-weight:800;font-size:1.55rem;color:var(--heading);margin-bottom:.4rem;}
+.auth-subtitle{font-size:.9rem;color:var(--muted);margin-bottom:2rem;}
+.auth-link{color:var(--accent);text-decoration:none;font-weight:600;}
+.auth-link:hover{text-decoration:underline;}
+
+/* Steps indicator */
+.steps-bar{display:flex;align-items:center;gap:0;margin-bottom:2rem;}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;flex-shrink:0;transition:all .3s;}
+.step-dot.done{background:var(--accent);color:#fff;}
+.step-dot.active{background:var(--accent);color:#fff;box-shadow:0 0 0 4px var(--accent-pale2);}
+.step-dot.pending{background:var(--line);color:var(--muted);}
+.step-line{flex:1;height:2px;background:var(--line);transition:background .3s;}
+.step-line.done{background:var(--accent);}
+.step-label{font-size:.7rem;font-weight:600;color:var(--muted);margin-top:.3rem;text-align:center;}
+.steps-labels{display:flex;justify-content:space-between;margin-top:.35rem;margin-bottom:1.5rem;}
+
+/* OTP input */
+.otp-wrap{display:flex;gap:.65rem;justify-content:center;margin:1.5rem 0;}
+.otp-input{
+  width:48px;height:56px;border-radius:var(--r-sm);
+  border:2px solid var(--line);background:var(--stone);
+  font-family:var(--sans);font-size:1.4rem;font-weight:800;
+  text-align:center;color:var(--heading);outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.otp-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);background:var(--white);}
+.otp-input.filled{border-color:var(--accent-pale2);background:var(--accent-pale);}
+.otp-input.error{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-dim);}
+
+.resend-row{text-align:center;font-size:.82rem;color:var(--muted);margin-top:.5rem;}
+.resend-btn{background:none;border:none;color:var(--accent);font-weight:700;cursor:pointer;font-size:.82rem;font-family:var(--sans);}
+.resend-btn:disabled{color:var(--muted);cursor:default;}
+#countdown{font-weight:700;color:var(--accent-h);}
+
+.email-sent-box{
+  background:var(--accent-pale);border:1px solid var(--accent-pale2);
+  border-radius:var(--r-sm);padding:.9rem 1.1rem;margin-bottom:1.5rem;
+  display:flex;align-items:flex-start;gap:.75rem;
+}
+.email-sent-box svg{width:18px;height:18px;color:var(--accent-h);flex-shrink:0;margin-top:.1rem;}
+.email-sent-text{font-size:.83rem;color:var(--body);}
+.email-sent-text strong{color:var(--heading);}
+
+/* Hidden step */
+#step-register{} 
+#step-verify{display:none;}
 </style>
 </head>
 <body>
@@ -26,59 +68,327 @@ body { display: flex; align-items: center; justify-content: center; min-height: 
     <div class="logo-mark">M</div>
     <div class="logo-text">My<b>Auto</b>Care</div>
   </div>
+
+  <!-- Progress bar -->
+  <div class="steps-bar">
+    <div class="step-dot active" id="dot1">1</div>
+    <div class="step-line" id="line1"></div>
+    <div class="step-dot pending" id="dot2">2</div>
+    <div class="step-line" id="line2"></div>
+    <div class="step-dot pending" id="dot3">✓</div>
+  </div>
+  <div class="steps-labels">
+    <span class="step-label">Your Details</span>
+    <span class="step-label">Verify Email</span>
+    <span class="step-label">Done</span>
+  </div>
+
   <div class="auth-card">
-    <h1 class="auth-title">Create your account</h1>
-    <p class="auth-subtitle">Start managing your vehicles for free</p>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Full Name</label>
-        <input type="text" id="name" class="form-control" placeholder="Ahmad Danial"/>
+
+    <!-- STEP 1: Registration form -->
+    <div id="step-register">
+      <h1 class="auth-title">Create your account</h1>
+      <p class="auth-subtitle">Start managing your vehicles for free</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="name" class="form-control" placeholder="Ahmad Danial"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input type="tel" id="phone" class="form-control" placeholder="01X-XXXXXXX"/>
+        </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Phone Number</label>
-        <input type="tel" id="phone" class="form-control" placeholder="01X-XXXXXXX"/>
+        <label class="form-label">Email Address</label>
+        <input type="email" id="email" class="form-control" placeholder="you@example.com"/>
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="password" class="form-control" placeholder="••••••••"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <input type="password" id="confirm" class="form-control" placeholder="••••••••"/>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" id="regBtn">
+        Continue — Verify Email
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path stroke-linecap="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+      </button>
+      <p style="text-align:center;font-size:.875rem;color:var(--muted);margin-top:1.25rem">
+        Already have an account? <a href="login.html" class="auth-link">Sign in</a>
+      </p>
     </div>
-    <div class="form-group">
-      <label class="form-label">Email Address</label>
-      <input type="email" id="email" class="form-control" placeholder="you@example.com"/>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" id="password" class="form-control" placeholder="••••••••"/>
+
+    <!-- STEP 2: OTP Verification -->
+    <div id="step-verify">
+      <h1 class="auth-title">Check your email</h1>
+      <p class="auth-subtitle">Enter the 6-digit code we sent to verify your account</p>
+
+      <div class="email-sent-box">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>
+        <div class="email-sent-text">
+          A verification code has been sent to <strong id="email-display"></strong>. Check your inbox and spam folder.
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Confirm Password</label>
-        <input type="password" id="confirm" class="form-control" placeholder="••••••••"/>
+
+      <div class="otp-wrap" id="otp-wrap">
+        <input class="otp-input" maxlength="1" id="o1" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-input" maxlength="1" id="o2" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-input" maxlength="1" id="o3" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-input" maxlength="1" id="o4" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-input" maxlength="1" id="o5" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-input" maxlength="1" id="o6" inputmode="numeric" pattern="[0-9]"/>
       </div>
+
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" id="verifyBtn">
+        Verify &amp; Create Account
+      </button>
+
+      <div class="resend-row" style="margin-top:1rem;">
+        Didn't receive it?
+        <button class="resend-btn" id="resendBtn" disabled>Resend code (<span id="countdown">60</span>s)</button>
+      </div>
+
+      <p style="text-align:center;font-size:.8rem;color:var(--muted);margin-top:1.25rem">
+        <button onclick="goBack()" style="background:none;border:none;color:var(--accent);font-weight:600;cursor:pointer;font-size:.8rem;font-family:var(--sans);">← Use a different email</button>
+      </p>
     </div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;" id="regBtn">
-      Create Account
-    </button>
-    <p style="text-align:center;font-size:.875rem;color:var(--muted);margin-top:1.25rem">
-      Already have an account? <a href="login.html" class="auth-link">Sign in</a>
-    </p>
+
   </div>
 </div>
+
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="app-core.js"></script>
 <script>
+// ── EmailJS Config ─────────────────────────────────────
+// TO SET UP:
+// 1. Go to https://www.emailjs.com and create a FREE account
+// 2. Add an Email Service (Gmail recommended) → note your Service ID
+// 3. Create a Template with these variables: {{to_name}}, {{to_email}}, {{otp_code}}
+//    Subject: "Your MyAutoCare verification code: {{otp_code}}"
+//    Body: "Hi {{to_name}}, your code is: {{otp_code}}  (expires in 10 minutes)"
+// 4. Note your Template ID and Public Key
+// 5. Replace the values below with your own
+
+const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';   // e.g. 'xKj2abc123XYZ'
+const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';   // e.g. 'service_myautocare'
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';  // e.g. 'template_verify'
+
+emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
+// ── State ──────────────────────────────────────────────
+let pendingUser = null;
+let generatedOTP = null;
+let otpExpiry = null;
+let countdownTimer = null;
+
 MAC.auth.redirectIfLoggedIn();
-document.getElementById('regBtn').addEventListener('click', () => {
-  const name = document.getElementById('name').value.trim();
-  const phone = document.getElementById('phone').value.trim();
-  const email = document.getElementById('email').value.trim();
+
+// ── STEP 1: Validate form & send OTP ──────────────────
+document.getElementById('regBtn').addEventListener('click', async () => {
+  const name     = document.getElementById('name').value.trim();
+  const phone    = document.getElementById('phone').value.trim();
+  const email    = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
-  const confirm = document.getElementById('confirm').value;
-  if (!name || !email || !password) { MAC.utils.toast('Please fill in all required fields', 'error'); return; }
-  if (password !== confirm) { MAC.utils.toast('Passwords do not match', 'error'); return; }
-  if (password.length < 6) { MAC.utils.toast('Password must be at least 6 characters', 'error'); return; }
-  if (MAC.users.find(email)) { MAC.utils.toast('Email already registered', 'error'); return; }
-  const user = MAC.users.create({ name, email, password, phone });
-  MAC.auth.login(user);
-  MAC.utils.toast('Account created! Welcome, ' + name.split(' ')[0] + '!');
-  setTimeout(() => window.location.href = 'dashboard.html', 700);
+  const confirm  = document.getElementById('confirm').value;
+
+  if (!name || !email || !password)          { MAC.utils.toast('Please fill in all required fields', 'error'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { MAC.utils.toast('Please enter a valid email address', 'error'); return; }
+  if (password !== confirm)                  { MAC.utils.toast('Passwords do not match', 'error'); return; }
+  if (password.length < 6)                   { MAC.utils.toast('Password must be at least 6 characters', 'error'); return; }
+  if (MAC.users.find(email))                 { MAC.utils.toast('Email already registered', 'error'); return; }
+
+  pendingUser = { name, email, password, phone };
+
+  // Generate 6-digit OTP
+  generatedOTP = String(Math.floor(100000 + Math.random() * 900000));
+  otpExpiry    = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+  const btn = document.getElementById('regBtn');
+  btn.textContent = 'Sending code…';
+  btn.disabled = true;
+
+  const sent = await sendOTPEmail(email, name, generatedOTP);
+
+  if (sent) {
+    showVerifyStep();
+    MAC.utils.toast('Verification code sent to ' + email);
+  } else {
+    btn.innerHTML = 'Continue — Verify Email <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path stroke-linecap="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>';
+    btn.disabled = false;
+  }
 });
+
+// ── Send OTP via EmailJS ───────────────────────────────
+async function sendOTPEmail(toEmail, toName, code) {
+  // If EmailJS not configured yet, fallback to showing code in console (dev mode)
+  if (EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') {
+    console.warn('⚠️  EmailJS not configured. Dev mode: OTP is ' + code);
+    MAC.utils.toast('Dev mode — check browser console for OTP code', 'error');
+    return true; // still proceed to verify step in dev mode
+  }
+  try {
+    // Calculate expiry time string (15 minutes from now)
+    const expiry = new Date(Date.now() + 15 * 60 * 1000);
+    const timeStr = expiry.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_name:  toName,
+      to_email: toEmail,
+      passcode: code,
+      time:     timeStr,
+    });
+    return true;
+  } catch (err) {
+    console.error('EmailJS error:', err);
+    MAC.utils.toast('Failed to send email. Please check your email address.', 'error');
+    return false;
+  }
+}
+
+// ── Show verify step ───────────────────────────────────
+function showVerifyStep() {
+  document.getElementById('step-register').style.display = 'none';
+  document.getElementById('step-verify').style.display   = 'block';
+  document.getElementById('email-display').textContent   = pendingUser.email;
+
+  // Update step indicators
+  document.getElementById('dot1').className  = 'step-dot done';
+  document.getElementById('line1').className = 'step-line done';
+  document.getElementById('dot2').className  = 'step-dot active';
+
+  startCountdown();
+  document.getElementById('o1').focus();
+}
+
+// ── Go back to form ────────────────────────────────────
+function goBack() {
+  document.getElementById('step-register').style.display = 'block';
+  document.getElementById('step-verify').style.display   = 'none';
+  document.getElementById('dot1').className  = 'step-dot active';
+  document.getElementById('line1').className = 'step-line';
+  document.getElementById('dot2').className  = 'step-dot pending';
+  clearInterval(countdownTimer);
+  clearOTPInputs();
+}
+
+// ── OTP input — auto-advance, backspace, paste ─────────
+const otpInputs = [1,2,3,4,5,6].map(n => document.getElementById('o'+n));
+
+otpInputs.forEach((inp, i) => {
+  inp.addEventListener('input', e => {
+    const val = e.target.value.replace(/\D/g,'');
+    e.target.value = val;
+    if (val) {
+      e.target.classList.add('filled');
+      if (i < 5) otpInputs[i+1].focus();
+      else document.getElementById('verifyBtn').focus();
+    } else {
+      e.target.classList.remove('filled');
+    }
+  });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !e.target.value && i > 0) {
+      otpInputs[i-1].value = '';
+      otpInputs[i-1].classList.remove('filled');
+      otpInputs[i-1].focus();
+    }
+  });
+  inp.addEventListener('paste', e => {
+    e.preventDefault();
+    const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').substring(0,6);
+    paste.split('').forEach((ch, idx) => {
+      if (otpInputs[idx]) { otpInputs[idx].value = ch; otpInputs[idx].classList.add('filled'); }
+    });
+    if (paste.length === 6) document.getElementById('verifyBtn').focus();
+  });
+});
+
+// ── Verify OTP & create account ────────────────────────
+document.getElementById('verifyBtn').addEventListener('click', () => {
+  const entered = otpInputs.map(i => i.value).join('');
+
+  if (entered.length < 6) {
+    MAC.utils.toast('Please enter the full 6-digit code', 'error');
+    otpInputs.forEach(i => i.classList.add('error'));
+    setTimeout(() => otpInputs.forEach(i => i.classList.remove('error')), 1200);
+    return;
+  }
+
+  if (Date.now() > otpExpiry) {
+    MAC.utils.toast('Code has expired (15 min limit). Please request a new one.', 'error');
+    clearOTPInputs();
+    return;
+  }
+
+  if (entered !== generatedOTP) {
+    MAC.utils.toast('Incorrect code. Please try again.', 'error');
+    otpInputs.forEach(i => { i.classList.add('error'); i.classList.remove('filled'); });
+    setTimeout(() => { otpInputs.forEach(i => i.classList.remove('error')); clearOTPInputs(); otpInputs[0].focus(); }, 1000);
+    return;
+  }
+
+  // ✅ Code correct — create account
+  document.getElementById('dot2').className  = 'step-dot done';
+  document.getElementById('line2').className = 'step-line done';
+  document.getElementById('dot3').className  = 'step-dot active';
+  clearInterval(countdownTimer);
+
+  const user = MAC.users.create(pendingUser);
+  MAC.auth.login(user);
+  MAC.utils.toast('Email verified! Welcome, ' + pendingUser.name.split(' ')[0] + ' 🎉');
+  setTimeout(() => window.location.href = 'dashboard.html', 900);
+});
+
+// ── Countdown timer & resend ───────────────────────────
+function startCountdown() {
+  let secs = 60;
+  const countEl   = document.getElementById('countdown');
+  const resendBtn  = document.getElementById('resendBtn');
+  resendBtn.disabled = true;
+  resendBtn.textContent = '';
+  resendBtn.insertAdjacentHTML('beforeend', 'Resend code (<span id="countdown">' + secs + '</span>s)');
+
+  countdownTimer = setInterval(() => {
+    secs--;
+    const el = document.getElementById('countdown');
+    if (el) el.textContent = secs;
+    if (secs <= 0) {
+      clearInterval(countdownTimer);
+      resendBtn.disabled = false;
+      resendBtn.textContent = 'Resend code';
+    }
+  }, 1000);
+}
+
+document.getElementById('resendBtn').addEventListener('click', async () => {
+  if (!pendingUser) return;
+  generatedOTP = String(Math.floor(100000 + Math.random() * 900000));
+  otpExpiry    = Date.now() + 15 * 60 * 1000;
+  clearOTPInputs();
+
+  const btn = document.getElementById('resendBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  const sent = await sendOTPEmail(pendingUser.email, pendingUser.name, generatedOTP);
+  if (sent) {
+    MAC.utils.toast('New code sent!');
+    startCountdown();
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'Resend code';
+  }
+});
+
+function clearOTPInputs() {
+  otpInputs.forEach(i => { i.value = ''; i.classList.remove('filled','error'); });
+  otpInputs[0].focus();
+}
 </script>
 </body>
 </html>
