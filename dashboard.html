@@ -42,10 +42,10 @@ logs.forEach(l => { typeCounts[l.serviceType] = (typeCounts[l.serviceType] || 0)
 const typeLabels = Object.keys(typeCounts);
 const typeData = Object.values(typeCounts);
 
-const grn = '#35e857';
+const grn = '#1db954';
 const chartDefaults = { responsive: true, maintainAspectRatio: false,
-  plugins: { legend: { display: false }, tooltip: { backgroundColor: '#102213', titleColor: '#9ffcad', bodyColor: '#b8dfc0', borderColor: '#35e857', borderWidth: 1 } },
-  scales: { x: { grid: { color: 'rgba(53,232,87,.05)' }, ticks: { color: '#6db37c' } }, y: { grid: { color: 'rgba(53,232,87,.05)' }, ticks: { color: '#6db37c', callback: v => 'RM' + v } } }
+  plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0f1a0e', titleColor: '#d3f7e1', bodyColor: '#8c9e8b', borderColor: '#1db954', borderWidth: 1 } },
+  scales: { x: { grid: { color: 'rgba(53,232,87,.05)' }, ticks: { color: '#8c9e8b' } }, y: { grid: { color: 'rgba(53,232,87,.05)' }, ticks: { color: '#8c9e8b', callback: v => 'RM' + v } } }
 };
 
 document.getElementById('page-content').innerHTML = `
@@ -110,7 +110,7 @@ document.getElementById('page-content').innerHTML = `
         return `<div class="activity-item">
           <div class="activity-dot"></div>
           <div>
-            <div class="activity-text">${MAC.utils.escapeHtml(l.serviceType)} — <strong style="color:var(--white)">${v ? MAC.utils.escapeHtml(v.brand + ' ' + v.model) : '?'}</strong></div>
+            <div class="activity-text">${MAC.utils.escapeHtml(l.serviceType)} — <strong style="color:var(--heading)">${v ? MAC.utils.escapeHtml(v.brand + ' ' + v.model) : '?'}</strong></div>
             <div class="activity-meta">${MAC.utils.formatDate(l.serviceDate)} · ${MAC.utils.formatCurrency(l.cost)} · ${MAC.utils.escapeHtml(l.workshopName)}</div>
           </div>
         </div>`;
@@ -123,10 +123,10 @@ document.getElementById('page-content').innerHTML = `
       </div>
       ${vehicles.length ? vehicles.map(v => {
         const s = MAC.utils.getVehicleStatus(v.id);
-        return `<div style="display:flex;align-items:center;gap:.9rem;padding:.75rem 0;border-bottom:1px solid var(--border)">
+        return `<div style="display:flex;align-items:center;gap:.9rem;padding:.75rem 0;border-bottom:1px solid var(--line)">
           <div style="font-size:1.5rem">${v.type === 'car' ? '🚗' : '🏍️'}</div>
           <div style="flex:1">
-            <div style="font-weight:600;color:var(--white);font-size:.9rem">${MAC.utils.escapeHtml(v.brand)} ${MAC.utils.escapeHtml(v.model)}</div>
+            <div style="font-weight:600;color:var(--heading);font-size:.9rem">${MAC.utils.escapeHtml(v.brand)} ${MAC.utils.escapeHtml(v.model)}</div>
             <div style="font-size:.75rem;color:var(--accent)">${MAC.utils.escapeHtml(v.plate)}</div>
           </div>
           <span class="badge badge-${s.cls.replace('status-','')}">${s.label}</span>
@@ -142,7 +142,7 @@ document.getElementById('page-content').innerHTML = `
 
 // Render charts
 if (typeof Chart !== 'undefined') {
-  Chart.defaults.color = '#6db37c';
+  Chart.defaults.color = '#8c9e8b';
   Chart.defaults.font.family = "'Urbanist', sans-serif";
 
   new Chart(document.getElementById('costChart'), {
@@ -155,11 +155,11 @@ if (typeof Chart !== 'undefined') {
     type: 'doughnut',
     data: {
       labels: typeLabels.length ? typeLabels : ['No Data'],
-      datasets: [{ data: typeData.length ? typeData : [1], backgroundColor: ['#35e857','#9ffcad','#1f4a2a','#fbbf24','#60a5fa','#f87171'], borderWidth: 0 }]
+      datasets: [{ data: typeData.length ? typeData : [1], backgroundColor: ['#35e857','#9ffcad','#bbf7d0','#fbbf24','#60a5fa','#f87171'], borderWidth: 0 }]
     },
     options: {
       responsive: true, maintainAspectRatio: false, cutout: '68%',
-      plugins: { legend: { display: true, position: 'bottom', labels: { color: '#b8dfc0', font: { size: 11 }, padding: 12, boxWidth: 10 } }, tooltip: chartDefaults.plugins.tooltip }
+      plugins: { legend: { display: true, position: 'bottom', labels: { color: '#3d4e3c', font: { size: 11 }, padding: 12, boxWidth: 10 } }, tooltip: chartDefaults.plugins.tooltip }
     }
   });
 }
