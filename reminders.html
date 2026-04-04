@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Reminders — MyAutoCare</title>
+<link rel="stylesheet" href="app.css"/>
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="app-layout"></div>
+
+<div class="modal-overlay" id="reminderModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="reminderModalTitle">Add Reminder</span>
+      <button class="modal-close" onclick="window.closeReminderModal()">×</button>
+    </div>
+    <input type="hidden" id="reminderEditId"/>
+    <div class="form-group">
+      <label class="form-label">Vehicle *</label>
+      <select id="rVehicle" class="form-select"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Reminder Type *</label>
+        <select id="rType" class="form-select">
+          <option>Next Service</option><option>Road Tax Renewal</option>
+          <option>Insurance Expiry</option><option>Tyre Rotation</option>
+          <option>Oil Change</option><option>Timing Belt</option><option>Others</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Due Date *</label>
+        <input type="date" id="rDue" class="form-control"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notify me (days before due)</label>
+      <select id="rNotify" class="form-select">
+        <option value="3">3 days before</option>
+        <option value="7" selected>7 days before</option>
+        <option value="14">14 days before</option>
+        <option value="30">30 days before</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea id="rNotes" class="form-control" rows="2" placeholder="Renew via myeg.com.my..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="window.closeReminderModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="window.saveReminder()">Save Reminder</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="deleteReminderModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <span class="modal-title">Delete Reminder?</span>
+      <button class="modal-close" onclick="document.getElementById('deleteReminderModal').classList.remove('open')">×</button>
+    </div>
+    <p style="color:var(--muted);font-size:.9rem">This reminder will be permanently deleted.</p>
+    <input type="hidden" id="deleteReminderId"/>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="document.getElementById('deleteReminderModal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-danger" onclick="window.confirmDeleteReminder()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import MAC from './app-core.js';
+import { buildLayout } from './layout.js';
+(async () => {
+const user = await buildLayout('reminders', 'Reminders');
+let _vehicles = [];
+let _filter   = 'all';
+
+function badge(status) {
+  const map   = { overdue:'danger', today:'warning', soon:'warning', upcoming:'info', done:'success' };
+  const label = { overdue:'🔴 Overdue', today:'🟡 Due Today', soon:'🟡 Due Soon', upcoming:'🟢 Upcoming', done:'✅ Done' };
+  return `<span class="badge badge-${map[status]||'info'}">${label[status]||status}</span>`;
+}
+
+async function renderPage() {
+  document.getElementById('page-content').innerHTML =
+    `<div style="padding:3rem;text-align:center;color:var(--muted)"><div style="font-size:2rem">⏳</div>Loading...</div>`;
+
+  _vehicles = await MAC.vehicles.forUser(user.uid);
+  let reminders = await MAC.reminders.forUser(user.uid);
+
+  reminders = reminders.map(r => ({
+    ...r,
+    _status: r.status === 'done' ? 'done' : MAC.reminders.getStatus(r.dueDate, r.notifyDays)
+  }));
+
+  const active  = reminders.filter(r => r.status !== 'done');
+  const overdue = reminders.filter(r => r._status === 'overdue');
+
+  let filtered = reminders;
+  if (_filter === 'overdue')  filtered = reminders.filter(r => r._status === 'overdue');
+  else if (_filter === 'upcoming') filtered = reminders.filter(r => r.status !== 'done');
+  else if (_filter === 'done')     filtered = reminders.filter(r => r.status === 'done');
+
+  filtered.sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+  const vMap = {};
+  _vehicles.forEach(v => vMap[v.id] = v);
+
+  const cards = filtered.map(r => {
+    const v        = vMap[r.vehicleId];
+    const daysLeft = Math.ceil((new Date(r.dueDate) - new Date()) / 86400000);
+    const daysLabel = daysLeft < 0 ? `${Math.abs(daysLeft)} days ago` : daysLeft===0 ? 'Today' : `in ${daysLeft} days`;
+    const borderColor = r._status==='overdue'?'var(--danger)':r._status==='done'?'var(--accent)':r._status==='soon'?'var(--warning)':'var(--line)';
+    return `<div class="card" style="padding:1.25rem;border-left:3px solid ${borderColor}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem">
+            <span style="font-weight:700;color:var(--heading)">${MAC.utils.escapeHtml(r.type)}</span>
+            ${badge(r._status)}
+          </div>
+          <div style="font-size:.85rem;color:var(--muted)">
+            ${v?`<span style="color:var(--accent)">${MAC.utils.escapeHtml(v.plate)}</span> · ${MAC.utils.escapeHtml(v.brand+' '+v.model)} · `:''}
+            Due: <strong style="color:var(--heading)">${MAC.utils.formatDate(r.dueDate)}</strong>
+            <span style="color:${r._status==='overdue'?'var(--danger)':r._status==='soon'?'var(--warning)':'var(--muted)'}">(${daysLabel})</span>
+          </div>
+          ${r.notes?`<div style="font-size:.8rem;color:var(--muted);margin-top:.35rem">${MAC.utils.escapeHtml(r.notes)}</div>`:''}
+          <div style="font-size:.75rem;color:var(--muted);margin-top:.25rem">Notify ${r.notifyDays} days before</div>
+        </div>
+        <div style="display:flex;gap:.4rem;flex-shrink:0">
+          ${r.status!=='done'?`<button class="btn btn-outline btn-sm" style="color:var(--accent)" onclick="window.markDone('${r.id}')">✓ Done</button>`:''}
+          <button class="btn btn-outline btn-sm" onclick="window.openEditReminderModal('${r.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="window.openDeleteReminderModal('${r.id}')">Del</button>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('page-content').innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Reminders</h1>
+        <p class="page-subtitle">${overdue.length?`<span style="color:var(--danger)">⚠️ ${overdue.length} overdue</span> · `:''}${active.length} active reminder${active.length!==1?'s':''}</p>
+      </div>
+      <button class="btn btn-primary" onclick="window.openAddReminderModal()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path stroke-linecap="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        Add Reminder
+      </button>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn ${_filter==='all'?'active':''}" onclick="window._setFilter('all')">All (${reminders.length})</button>
+      <button class="tab-btn ${_filter==='upcoming'?'active':''}" onclick="window._setFilter('upcoming')">Active (${active.length})</button>
+      <button class="tab-btn ${_filter==='overdue'?'active':''}" onclick="window._setFilter('overdue')" style="color:${overdue.length?'var(--danger)':''}">Overdue (${overdue.length})</button>
+      <button class="tab-btn ${_filter==='done'?'active':''}" onclick="window._setFilter('done')">Done (${reminders.filter(r=>r.status==='done').length})</button>
+    </div>
+    ${filtered.length===0
+      ? `<div class="empty-state"><div class="empty-icon">🔔</div><div class="empty-title">No reminders here</div>
+         <div class="empty-desc">${_filter==='done'?'No completed reminders yet':'Add a reminder to stay on top of maintenance'}</div>
+         ${_filter!=='done'?`<button class="btn btn-primary" style="margin-top:1rem" onclick="window.openAddReminderModal()">Add Reminder</button>`:''}</div>`
+      : `<div style="display:flex;flex-direction:column;gap:.75rem">${cards.join('')}</div>`
+    }`;
+}
+
+window._setFilter = async function(f) { _filter = f; await renderPage(); };
+
+async function populateVehicles(selectedId) {
+  const sel = document.getElementById('rVehicle');
+  sel.innerHTML = _vehicles.length
+    ? _vehicles.map(v => `<option value="${v.id}" ${v.id===selectedId?'selected':''}>${MAC.utils.escapeHtml(v.plate+' — '+v.brand+' '+v.model)}</option>`).join('')
+    : '<option>— No vehicles —</option>';
+}
+
+window.openAddReminderModal = async function() {
+  document.getElementById('reminderModalTitle').textContent = 'Add Reminder';
+  document.getElementById('reminderEditId').value = '';
+  document.getElementById('rType').selectedIndex = 0;
+  document.getElementById('rDue').value = '';
+  document.getElementById('rNotify').value = '7';
+  document.getElementById('rNotes').value = '';
+  await populateVehicles('');
+  document.getElementById('reminderModal').classList.add('open');
+};
+
+window.openEditReminderModal = async function(id) {
+  const r = await MAC.reminders.get(id);
+  if (!r) return;
+  document.getElementById('reminderModalTitle').textContent = 'Edit Reminder';
+  document.getElementById('reminderEditId').value = id;
+  await populateVehicles(r.vehicleId);
+  document.getElementById('rType').value   = r.type;
+  document.getElementById('rDue').value    = r.dueDate;
+  document.getElementById('rNotify').value = r.notifyDays;
+  document.getElementById('rNotes').value  = r.notes || '';
+  document.getElementById('reminderModal').classList.add('open');
+};
+
+window.closeReminderModal = function() {
+  document.getElementById('reminderModal').classList.remove('open');
+};
+
+window.saveReminder = async function() {
+  if (!_vehicles.length) { MAC.utils.toast('Please add a vehicle first','error'); return; }
+  const data = {
+    vehicleId:  document.getElementById('rVehicle').value,
+    type:       document.getElementById('rType').value,
+    dueDate:    document.getElementById('rDue').value,
+    notifyDays: document.getElementById('rNotify').value,
+    notes:      document.getElementById('rNotes').value.trim()
+  };
+  if (!data.dueDate) { MAC.utils.toast('Please set a due date','error'); return; }
+  const btn = document.querySelector('#reminderModal .btn-primary');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    const editId = document.getElementById('reminderEditId').value;
+    if (editId) { await MAC.reminders.update(editId, data); MAC.utils.toast('Reminder updated'); }
+    else        { await MAC.reminders.create(data);         MAC.utils.toast('Reminder added'); }
+    window.closeReminderModal();
+    await renderPage();
+  } catch(e) {
+    MAC.utils.toast('Save failed: '+e.message,'error');
+  } finally {
+    btn.textContent = 'Save Reminder'; btn.disabled = false;
+  }
+};
+
+window.markDone = async function(id) {
+  await MAC.reminders.update(id, { status:'done' });
+  MAC.utils.toast('Reminder marked as done ✓');
+  await renderPage();
+};
+
+window.openDeleteReminderModal = function(id) {
+  document.getElementById('deleteReminderId').value = id;
+  document.getElementById('deleteReminderModal').classList.add('open');
+};
+
+window.confirmDeleteReminder = async function() {
+  const id  = document.getElementById('deleteReminderId').value;
+  const btn = document.querySelector('#deleteReminderModal .btn-danger');
+  btn.textContent = 'Deleting…'; btn.disabled = true;
+  try {
+    await MAC.reminders.delete(id);
+    document.getElementById('deleteReminderModal').classList.remove('open');
+    MAC.utils.toast('Reminder deleted');
+    await renderPage();
+  } catch(e) {
+    MAC.utils.toast('Delete failed: '+e.message,'error');
+  } finally {
+    btn.textContent = 'Delete'; btn.disabled = false;
+  }
+};
+
+await renderPage();
+})();
+</script>
+</body>
+</html>

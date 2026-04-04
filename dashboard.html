@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard — MyAutoCare</title>
+<link rel="stylesheet" href="app.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="app-layout"></div>
+<script type="module">
+import MAC from './app-core.js';
+import { buildLayout } from './layout.js';
+(async () => {
+const EJS_SERVICE  = 'service_zyuvjao';
+const EJS_TEMPLATE = 'template_reminder';
+const EJS_KEY      = 'Z8M7B3RIWcf-gJJ8u';
+emailjs.init({ publicKey: EJS_KEY });
+
+const user = await buildLayout('dashboard', 'Dashboard');
+
+// Load all data in parallel
+const [vehicles, logs, reminders] = await Promise.all([
+  MAC.vehicles.forUser(user.uid),
+  MAC.logs.forUser(user.uid),
+  MAC.reminders.forUser(user.uid)
+]);
+
+const totalSpent      = logs.reduce((s,l) => s + parseFloat(l.cost||0), 0);
+const activeReminders = reminders.filter(r => r.status !== 'done');
+const overdueCount    = activeReminders.filter(r => MAC.reminders.getStatus(r.dueDate) === 'overdue').length;
+const recentLogs      = logs.slice(0, 5);
+const vMap = {};
+vehicles.forEach(v => vMap[v.id] = v);
+
+// Monthly costs
+const months = [], monthlyCosts = [];
+for (let i=5; i>=0; i--) {
+  const d = new Date(); d.setMonth(d.getMonth()-i);
+  const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  months.push(d.toLocaleDateString('en-MY',{month:'short',year:'2-digit'}));
+  monthlyCosts.push(logs.filter(l=>l.serviceDate?.startsWith(key)).reduce((s,l)=>s+parseFloat(l.cost||0),0));
+}
+const typeCounts = {};
+logs.forEach(l => { typeCounts[l.serviceType] = (typeCounts[l.serviceType]||0)+1; });
+const typeLabels = Object.keys(typeCounts);
+const typeData   = Object.values(typeCounts);
+
+const grn = '#1db954';
+const chartOpts = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#0f1a0e',titleColor:'#d3f7e1',bodyColor:'#8c9e8b',borderColor:'#1db954',borderWidth:1} },
+  scales:{ x:{grid:{color:'rgba(29,185,84,.05)'},ticks:{color:'#8c9e8b'}}, y:{grid:{color:'rgba(29,185,84,.05)'},ticks:{color:'#8c9e8b',callback:v=>'RM'+v}} }
+};
+
+document.getElementById('page-content').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Good ${new Date().getHours()<12?'morning':new Date().getHours()<18?'afternoon':'evening'}, ${MAC.utils.escapeHtml(user.name.split(' ')[0])} 👋</h1>
+      <p class="page-subtitle">Here's your vehicle health overview</p>
+    </div>
+    <a href="vehicles.html" class="btn btn-primary">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path stroke-linecap="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+      Add Vehicle
+    </a>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M9 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm10 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/><path stroke-linecap="round" d="M1 17h2a2 2 0 0 1 2-2h.5L7 9h10l1.5 6H19a2 2 0 0 1 2 2h2"/></svg></div>
+      <div><div class="stat-val">${vehicles.length}</div><div class="stat-label">Vehicles Registered</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25Z"/></svg></div>
+      <div><div class="stat-val">${logs.length}</div><div class="stat-label">Service Records</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/></svg></div>
+      <div>
+        <div class="stat-val" style="color:${overdueCount?'var(--danger)':'var(--accent)'}">${activeReminders.length}</div>
+        <div class="stat-label">Active Reminders${overdueCount?` (${overdueCount} overdue)`:''}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg></div>
+      <div><div class="stat-val">RM ${totalSpent.toFixed(0)}</div><div class="stat-label">Total Spent</div></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem" class="dash-charts">
+    <div class="chart-card">
+      <div class="card-header" style="margin-bottom:1rem"><div class="card-title">Monthly Spending</div><span style="font-size:.75rem;color:var(--muted)">Last 6 months</span></div>
+      <div class="chart-wrap"><canvas id="costChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="card-header" style="margin-bottom:1rem"><div class="card-title">Service Breakdown</div><span style="font-size:.75rem;color:var(--muted)">By type</span></div>
+      <div class="chart-wrap"><canvas id="typeChart"></canvas></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:1.25rem" class="dash-bottom">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Recent Activity</div><a href="maintenance.html" class="btn btn-outline btn-sm">View All</a></div>
+      ${recentLogs.length
+        ? recentLogs.map(l => {
+            const v = vMap[l.vehicleId];
+            return `<div class="activity-item"><div class="activity-dot"></div><div>
+              <div class="activity-text">${MAC.utils.escapeHtml(l.serviceType)} — <strong style="color:var(--heading)">${v?MAC.utils.escapeHtml(v.brand+' '+v.model):'?'}</strong></div>
+              <div class="activity-meta">${MAC.utils.formatDate(l.serviceDate)} · ${MAC.utils.formatCurrency(l.cost)} · ${MAC.utils.escapeHtml(l.workshopName)}</div>
+            </div></div>`;
+          }).join('')
+        : '<div style="color:var(--muted);font-size:.875rem;padding:1rem 0">No records yet. <a href="maintenance.html" style="color:var(--accent)">Add your first one →</a></div>'
+      }
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">My Vehicles</div><a href="vehicles.html" class="btn btn-outline btn-sm">Manage</a></div>
+      <div id="vStatus"><div style="color:var(--muted);font-size:.82rem;padding:.5rem">Loading...</div></div>
+    </div>
+  </div>
+`;
+
+// Load vehicle statuses
+const vStatusEl = document.getElementById('vStatus');
+if (vehicles.length) {
+  const rows = await Promise.all(vehicles.map(async v => {
+    const s = await MAC.utils.getVehicleStatus(v.id);
+    return `<div style="display:flex;align-items:center;gap:.9rem;padding:.75rem 0;border-bottom:1px solid var(--line)">
+      <div style="font-size:1.5rem">${v.type==='car'?'🚗':'🏍️'}</div>
+      <div style="flex:1">
+        <div style="font-weight:600;color:var(--heading);font-size:.9rem">${MAC.utils.escapeHtml(v.brand)} ${MAC.utils.escapeHtml(v.model)}</div>
+        <div style="font-size:.75rem;color:var(--accent)">${MAC.utils.escapeHtml(v.plate)}</div>
+      </div>
+      <span class="badge badge-${s.cls.replace('status-','')}">${s.label}</span>
+    </div>`;
+  }));
+  vStatusEl.innerHTML = rows.join('');
+} else {
+  vStatusEl.innerHTML = `<div class="empty-state" style="padding:2rem 1rem">
+    <div class="empty-icon">🚗</div><div class="empty-title" style="font-size:.95rem">No vehicles yet</div>
+    <a href="vehicles.html" class="btn btn-primary btn-sm" style="margin-top:.75rem">Add Vehicle</a>
+  </div>`;
+}
+
+// Charts
+if (typeof Chart !== 'undefined') {
+  Chart.defaults.color = '#8c9e8b';
+  Chart.defaults.font.family = "'Plus Jakarta Sans',sans-serif";
+  new Chart(document.getElementById('costChart'), {
+    type:'bar',
+    data:{ labels:months, datasets:[{data:monthlyCosts,backgroundColor:'rgba(29,185,84,.15)',borderColor:grn,borderWidth:2,borderRadius:6}] },
+    options:{ ...chartOpts }
+  });
+  new Chart(document.getElementById('typeChart'), {
+    type:'doughnut',
+    data:{ labels:typeLabels.length?typeLabels:['No Data'], datasets:[{data:typeData.length?typeData:[1],backgroundColor:['#1db954','#bbf7d0','#d3f7e1','#fbbf24','#60a5fa','#f87171'],borderWidth:0}] },
+    options:{ responsive:true,maintainAspectRatio:false,cutout:'68%',
+      plugins:{ legend:{display:true,position:'bottom',labels:{color:'#3d4e3c',font:{size:11},padding:12,boxWidth:10}},tooltip:chartOpts.plugins.tooltip } }
+  });
+}
+
+const mq = window.matchMedia('(max-width:700px)');
+if (mq.matches) {
+  document.querySelector('.dash-charts').style.gridTemplateColumns = '1fr';
+  document.querySelector('.dash-bottom').style.gridTemplateColumns = '1fr';
+}
+
+// Reminder banner + emails
+async function checkReminders() {
+  const today    = new Date(); today.setHours(0,0,0,0);
+  const sentKey  = 'mac_sent_' + user.uid;
+  const sent     = JSON.parse(localStorage.getItem(sentKey)||'{}');
+  const todayStr = new Date().toDateString();
+  const due      = [];
+
+  for (const r of activeReminders) {
+    const d   = new Date(r.dueDate); d.setHours(0,0,0,0);
+    const dl  = Math.ceil((d - today)/86400000);
+    const win = parseInt(r.notifyDays)||7;
+    if (dl > win) continue;
+    r._status = MAC.reminders.getStatus(r.dueDate, r.notifyDays);
+    r._days   = dl;
+    due.push(r);
+    const sid = r.id + '_' + todayStr;
+    if (sent[sid]) continue;
+    const v = vMap[r.vehicleId];
+    const vName = v ? v.brand+' '+v.model+' ('+v.plate+')' : 'your vehicle';
+    try {
+      await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
+        to_name: user.name, to_email: user.email,
+        reminder_type: r.type, vehicle_name: vName,
+        due_date: MAC.utils.formatDate(r.dueDate),
+        status_label: dl<0?'🔴 OVERDUE':dl===0?'🟡 Due Today':`🟡 Due in ${dl} day${dl>1?'s':''}`,
+        notes: r.notes||'No additional notes'
+      });
+      sent[sid] = true;
+      localStorage.setItem(sentKey, JSON.stringify(sent));
+    } catch(e) { console.warn('Email failed:', e); }
+  }
+
+  if (!due.length) return;
+  const ov = due.filter(r=>r._status==='overdue');
+  const clr = ov.length ? '#991b1b' : '#92400e';
+  const bg  = ov.length ? '#fef2f2' : '#fffbeb';
+  const bdr = ov.length ? '#fecaca' : '#fde68a';
+  const msg = ov.length ? `${ov.length} overdue reminder${ov.length>1?'s':''} need attention` : `${due.length} reminder${due.length>1?'s':''} coming up`;
+  const names = due.slice(0,2).map(r=>`<strong>${MAC.utils.escapeHtml(r.type)}</strong>`).join(' · ');
+
+  const banner = document.createElement('div');
+  banner.style.cssText = `position:fixed;top:58px;left:var(--sw);right:0;z-index:80;background:${bg};border-bottom:1px solid ${bdr};padding:.65rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;font-size:.85rem;`;
+  banner.innerHTML = `
+    <div style="display:flex;align-items:center;gap:.65rem;color:${clr}">
+      <span>${ov.length?'🔴':'🟡'}</span>
+      <span><strong>${msg}:</strong> ${names}${due.length>2?` +${due.length-2} more`:''}</span>
+    </div>
+    <div style="display:flex;gap:.75rem;align-items:center">
+      <a href="reminders.html" style="font-weight:700;color:${clr};text-decoration:none;font-size:.82rem;border:1.5px solid ${bdr};padding:.28rem .85rem;border-radius:99px">View →</a>
+      <button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem">×</button>
+    </div>`;
+  const main = document.querySelector('.app-main');
+  if (main) main.insertBefore(banner, main.querySelector('.app-content'));
+}
+
+setTimeout(checkReminders, 1000);
+})();
+</script>
+</body>
+</html>

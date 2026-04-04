@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Maintenance Log — MyAutoCare</title>
+<link rel="stylesheet" href="app.css"/>
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="app-layout"></div>
+
+<div class="modal-overlay" id="logModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title" id="logModalTitle">Log Service</span>
+      <button class="modal-close" onclick="window.closeLogModal()">×</button>
+    </div>
+    <input type="hidden" id="logEditId"/>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Vehicle *</label>
+        <select id="lVehicle" class="form-select"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Service Type *</label>
+        <select id="lType" class="form-select">
+          <option>Oil Change</option><option>Tyre Rotation</option><option>Tyre Replacement</option>
+          <option>Brake Service</option><option>Air Filter</option><option>Battery Replacement</option>
+          <option>Chain Adjustment</option><option>Full Service</option><option>Others</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Service Date *</label>
+        <input type="date" id="lDate" class="form-control"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mileage at Service (km)</label>
+        <input type="number" id="lMileage" class="form-control" placeholder="45000"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Workshop Name *</label>
+        <input type="text" id="lWorkshop" class="form-control" placeholder="Perodua SC KL"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cost (RM) *</label>
+        <input type="number" id="lCost" class="form-control" placeholder="120" step="0.01"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea id="lNotes" class="form-control" rows="2" placeholder="Full synthetic oil, next service at 50,000km..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="window.closeLogModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="window.saveLog()">Save Log</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="deleteLogModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <span class="modal-title">Delete Log?</span>
+      <button class="modal-close" onclick="document.getElementById('deleteLogModal').classList.remove('open')">×</button>
+    </div>
+    <p style="color:var(--muted);font-size:.9rem">This service record will be permanently deleted.</p>
+    <input type="hidden" id="deleteLogId"/>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="document.getElementById('deleteLogModal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-danger" onclick="window.confirmDeleteLog()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import MAC from './app-core.js';
+import { buildLayout } from './layout.js';
+(async () => {
+const user = await buildLayout('maintenance', 'Maintenance Log');
+let _vehicles = [];
+let _fVehicle = '';
+let _fType    = '';
+
+// Read URL param
+const urlV = new URLSearchParams(window.location.search).get('vehicle');
+if (urlV) _fVehicle = urlV;
+
+async function renderPage() {
+  document.getElementById('page-content').innerHTML =
+    `<div style="padding:3rem;text-align:center;color:var(--muted)"><div style="font-size:2rem">⏳</div>Loading...</div>`;
+
+  _vehicles = await MAC.vehicles.forUser(user.uid);
+  let logs   = await MAC.logs.forUser(user.uid);
+
+  if (_fVehicle) logs = logs.filter(l => l.vehicleId === _fVehicle || l.vehicleId == _fVehicle);
+  if (_fType)    logs = logs.filter(l => l.serviceType === _fType);
+
+  const vMap = {};
+  _vehicles.forEach(v => vMap[v.id] = v);
+
+  const totalCost = logs.reduce((s,l) => s + parseFloat(l.cost||0), 0);
+  const types     = [...new Set(logs.map(l => l.serviceType))];
+
+  const rows = logs.map(l => {
+    const v = vMap[l.vehicleId];
+    return `<tr>
+      <td style="white-space:nowrap">${MAC.utils.formatDate(l.serviceDate)}</td>
+      <td>${v?`<div style="font-weight:600;color:var(--heading);font-size:.85rem">${MAC.utils.escapeHtml(v.brand+' '+v.model)}</div>
+              <div style="font-size:.75rem;color:var(--accent)">${MAC.utils.escapeHtml(v.plate)}</div>`:'—'}</td>
+      <td><span class="badge badge-info">${MAC.utils.escapeHtml(l.serviceType)}</span></td>
+      <td>${MAC.utils.escapeHtml(l.workshopName)}</td>
+      <td>${l.mileageAtService?parseInt(l.mileageAtService).toLocaleString()+' km':'—'}</td>
+      <td style="font-weight:700;color:var(--heading)">${MAC.utils.formatCurrency(l.cost)}</td>
+      <td>
+        <div style="display:flex;gap:.35rem">
+          <button class="btn btn-outline btn-sm" onclick="window.openEditLogModal('${l.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="window.openDeleteLogModal('${l.id}')">Del</button>
+        </div>
+      </td>
+    </tr>`;
+  });
+
+  document.getElementById('page-content').innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Maintenance Log</h1>
+        <p class="page-subtitle">${logs.length} record${logs.length!==1?'s':''} · Total: ${MAC.utils.formatCurrency(totalCost)}</p>
+      </div>
+      <button class="btn btn-primary" onclick="window.openAddLogModal()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path stroke-linecap="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        Log Service
+      </button>
+    </div>
+    <div class="card" style="margin-bottom:1.25rem">
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center">
+        <select class="form-select" style="width:auto;min-width:220px" onchange="window._fVehicle=this.value;window.renderPage()">
+          <option value="">All Vehicles</option>
+          ${_vehicles.map(v=>`<option value="${v.id}" ${v.id===_fVehicle||v.id==_fVehicle?'selected':''}>${MAC.utils.escapeHtml(v.plate+' — '+v.brand+' '+v.model)}</option>`).join('')}
+        </select>
+        <select class="form-select" style="width:auto;min-width:180px" onchange="window._fType=this.value;window.renderPage()">
+          <option value="">All Types</option>
+          ${[...new Set((await MAC.logs.forUser(user.uid)).map(l=>l.serviceType))].map(t=>`<option ${t===_fType?'selected':''}>${MAC.utils.escapeHtml(t)}</option>`).join('')}
+        </select>
+        ${_fVehicle||_fType?`<button class="btn btn-outline btn-sm" onclick="window._fVehicle='';window._fType='';window.renderPage()">Clear Filters</button>`:''}
+      </div>
+    </div>
+    ${logs.length===0
+      ? `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No records yet</div>
+         <div class="empty-desc">Start logging your vehicle maintenance</div>
+         <button class="btn btn-primary" style="margin-top:1rem" onclick="window.openAddLogModal()">Log First Service</button></div>`
+      : `<div class="card"><div class="table-wrap">
+         <table><thead><tr><th>Date</th><th>Vehicle</th><th>Service</th><th>Workshop</th><th>Mileage</th><th>Cost</th><th>Actions</th></tr></thead>
+         <tbody>${rows.join('')}</tbody></table></div></div>`
+    }`;
+}
+
+window.renderPage = renderPage;
+window._fVehicle  = _fVehicle;
+window._fType     = _fType;
+
+async function populateVehicles(selectedId) {
+  const sel = document.getElementById('lVehicle');
+  sel.innerHTML = _vehicles.length
+    ? _vehicles.map(v=>`<option value="${v.id}" ${v.id===selectedId||v.id==selectedId?'selected':''}>${MAC.utils.escapeHtml(v.plate+' — '+v.brand+' '+v.model)}</option>`).join('')
+    : '<option>— No vehicles —</option>';
+}
+
+window.openAddLogModal = async function() {
+  document.getElementById('logModalTitle').textContent = 'Log Service';
+  document.getElementById('logEditId').value = '';
+  document.getElementById('lDate').value     = new Date().toISOString().split('T')[0];
+  document.getElementById('lMileage').value  = '';
+  document.getElementById('lWorkshop').value = '';
+  document.getElementById('lCost').value     = '';
+  document.getElementById('lNotes').value    = '';
+  document.getElementById('lType').selectedIndex = 0;
+  await populateVehicles(_fVehicle || (_vehicles[0]?.id || ''));
+  document.getElementById('logModal').classList.add('open');
+};
+
+window.openEditLogModal = async function(id) {
+  const l = await MAC.logs.get(id);
+  if (!l) return;
+  document.getElementById('logModalTitle').textContent = 'Edit Log';
+  document.getElementById('logEditId').value    = id;
+  document.getElementById('lDate').value        = l.serviceDate;
+  document.getElementById('lMileage').value     = l.mileageAtService;
+  document.getElementById('lWorkshop').value    = l.workshopName;
+  document.getElementById('lCost').value        = l.cost;
+  document.getElementById('lNotes').value       = l.notes || '';
+  document.getElementById('lType').value        = l.serviceType;
+  await populateVehicles(l.vehicleId);
+  document.getElementById('logModal').classList.add('open');
+};
+
+window.closeLogModal = function() {
+  document.getElementById('logModal').classList.remove('open');
+};
+
+window.saveLog = async function() {
+  const data = {
+    vehicleId:        document.getElementById('lVehicle').value,
+    serviceType:      document.getElementById('lType').value,
+    serviceDate:      document.getElementById('lDate').value,
+    mileageAtService: document.getElementById('lMileage').value,
+    workshopName:     document.getElementById('lWorkshop').value.trim(),
+    cost:             document.getElementById('lCost').value,
+    notes:            document.getElementById('lNotes').value.trim()
+  };
+  if (!data.serviceDate||!data.workshopName||!data.cost) {
+    MAC.utils.toast('Please fill in required fields','error'); return;
+  }
+  const btn = document.querySelector('#logModal .btn-primary');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    const editId = document.getElementById('logEditId').value;
+    if (editId) { await MAC.logs.update(editId, data); MAC.utils.toast('Log updated'); }
+    else        { await MAC.logs.create(data);          MAC.utils.toast('Service logged'); }
+    window.closeLogModal();
+    await renderPage();
+  } catch(e) {
+    MAC.utils.toast('Save failed: '+e.message,'error');
+  } finally {
+    btn.textContent = 'Save Log'; btn.disabled = false;
+  }
+};
+
+window.openDeleteLogModal = function(id) {
+  document.getElementById('deleteLogId').value = id;
+  document.getElementById('deleteLogModal').classList.add('open');
+};
+
+window.confirmDeleteLog = async function() {
+  const id  = document.getElementById('deleteLogId').value;
+  const btn = document.querySelector('#deleteLogModal .btn-danger');
+  btn.textContent = 'Deleting…'; btn.disabled = true;
+  try {
+    await MAC.logs.delete(id);
+    document.getElementById('deleteLogModal').classList.remove('open');
+    MAC.utils.toast('Log deleted');
+    await renderPage();
+  } catch(e) {
+    MAC.utils.toast('Delete failed: '+e.message,'error');
+  } finally {
+    btn.textContent = 'Delete'; btn.disabled = false;
+  }
+};
+
+await renderPage();
+})();
+</script>
+</body>
+</html>

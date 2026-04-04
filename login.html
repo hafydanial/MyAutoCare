@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Login — MyAutoCare</title>
+<link rel="stylesheet" href="app.css"/>
+<style>
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1.5rem;background:var(--stone);}
+.auth-wrap{width:100%;max-width:420px;}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:2.5rem;justify-content:center;}
+.auth-logo .logo-mark{width:42px;height:42px;border-radius:11px;font-size:20px;}
+.auth-logo .logo-text{font-family:var(--sans);font-weight:700;font-size:1.2rem;color:var(--heading);}
+.auth-logo .logo-text b{color:var(--accent);font-weight:800;}
+.auth-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:2.5rem;box-shadow:var(--sh);}
+.auth-title{font-family:var(--sans);font-weight:800;font-size:1.55rem;color:var(--heading);margin-bottom:.4rem;}
+.auth-subtitle{font-size:.9rem;color:var(--muted);margin-bottom:2rem;}
+.auth-link{color:var(--accent);text-decoration:none;font-weight:600;}
+.auth-link:hover{text-decoration:underline;}
+.divider{display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;color:var(--muted);font-size:.8rem;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--line);}
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="auth-wrap">
+  <div class="auth-logo">
+    <div class="logo-mark">M</div>
+    <div class="logo-text">My<b>Auto</b>Care</div>
+  </div>
+  <div class="auth-card">
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-subtitle">Log in to manage your vehicles</p>
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input type="email" id="email" class="form-control" placeholder="you@example.com"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" id="password" class="form-control" placeholder="••••••••"/>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;" id="loginBtn">Sign In</button>
+    <div class="divider">or</div>
+    <p style="text-align:center;font-size:.875rem;color:var(--muted)">
+      Don't have an account? <a href="register.html" class="auth-link">Create one free</a>
+    </p>
+  </div>
+  <p style="text-align:center;margin-top:1.5rem;font-size:.78rem;color:var(--muted)">
+    <a href="index.html" class="auth-link">← Back to homepage</a>
+  </p>
+</div>
+<script type="module">
+import MAC from './app-core.js';
+
+// Instant redirect if session cached
+if (MAC.auth.isLoggedIn()) {
+  window.location.href = 'dashboard.html';
+}
+
+const btn = document.getElementById('loginBtn');
+
+btn.addEventListener('click', async () => {
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  if (!email || !password) {
+    MAC.utils.toast('Please fill in all fields', 'error');
+    return;
+  }
+
+  btn.textContent = 'Signing in…';
+  btn.disabled = true;
+
+  try {
+    const user = await MAC.auth.login(email, password);
+    MAC.utils.toast('Welcome back, ' + user.name.split(' ')[0] + '!');
+    setTimeout(() => window.location.href = 'dashboard.html', 600);
+  } catch(e) {
+    console.error('Login error:', e.code, e.message);
+    const msg =
+      e.code === 'auth/invalid-credential'     ? 'Invalid email or password.' :
+      e.code === 'auth/user-not-found'         ? 'No account with this email.' :
+      e.code === 'auth/wrong-password'         ? 'Incorrect password.' :
+      e.code === 'auth/too-many-requests'      ? 'Too many attempts. Try again later.' :
+      e.code === 'auth/network-request-failed' ? 'Network error. Check your connection.' :
+      e.code === 'auth/operation-not-allowed'  ? 'Email login not enabled in Firebase Console.' :
+      'Login failed: ' + (e.code || e.message);
+    MAC.utils.toast(msg, 'error');
+    btn.textContent = 'Sign In';
+    btn.disabled = false;
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') btn.click();
+});
+</script>
+</body>
+</html>
